@@ -419,7 +419,7 @@ function warnsOf(r,s,AS){var W=[],seen={};function add(lv,t){if(t&&!seen[t]){see
  (s.warn||[]).concat(ST.ref?(s.warnR||[]):[]).forEach(function(t){add(2,t)});if(s.loc)add(1,"Chỉ áp dụng trong phạm vi quy chế "+s.loc+"; không được trái QCVN.");
  return W.sort(function(a,b){return b.lv-a.lv}).slice(0,3)}
 function ans(r,c,AS,it,ms,L){var s=r,st=r.strict&&BY[r.strict];if(st&&act(st)&&st!==r&&c.loc&&st.loc===c.loc)s=st;
- var o={r:r,s:s,concl:fv(s),obj:s.obj,pre:it.bb?obl(s,AS):"",vd:it.kt?verdict(s,ms):null,cond:[],basis:[],warns:warnsOf(r,s,AS),rel:[],tips:[]};
+ var o={r:r,s:s,concl:fv(s),obj:s.obj,text:s.text,pre:it.bb?obl(s,AS):"",vd:it.kt?verdict(s,ms):null,cond:[],basis:[],warns:warnsOf(r,s,AS),rel:[],tips:[]};
  var cd=[];if(s!==r)cd.push("Chặt hơn "+fv(r)+" theo "+r.doc+" ("+r.clause+").");if(s.cond)cd.push(s.cond);if(s.def)cd.push("Cách tính: "+s.def);if(s.rel)cd.push("Dễ nhầm: "+s.rel);
  if(s.rows){var rw=s.rows.slice(1).map(function(x){return x[0]+": "+x[1]});cd=cd.concat(it.dk||it.ss||it.adv?rw:rw.slice(0,3))}o.cond=it.dk||it.ss||it.adv?cd:cd.slice(0,3);
  o.basis=(s.refs||[]).map(function(f){return{doc:f.doc,clause:f.clause,conf:f.conf,st:rstat(f,AS)}});
@@ -427,7 +427,7 @@ function ans(r,c,AS,it,ms,L){var s=r,st=r.strict&&BY[r.strict];if(st&&act(st)&&s
  (L||[]).slice(1).forEach(function(x){if(ids.length<3&&ids.indexOf(x.r)<0&&x.r!==s&&x.r.q!==s.q&&x.s>0)ids.push(x.r)});o.rel=ids.slice(0,3);
  if(it.why&&!o.pre)o.pre="Căn cứ quy định: "+s.doc+", "+s.clause+".";if(it.adv)o.tips=o.tips.concat(advise(s,c,AS));var tpp=s.tip||(ST.ref?s.tipR:null);if(tpp)o.tips.push(tpp);if(s.go)o.go=1;return o}
 function atext(o){var t=[(o.q?o.q+"\n":"")+"Kết luận: "+(o.pre?o.pre+" ":"")+(o.vd?o.vd.t+" ":"")+o.concl+" – "+o.obj];
- if(o.cond.length)t.push("Điều kiện: "+o.cond.join(" | "));t.push("Căn cứ: "+o.basis.map(function(b){return b.doc+", "+b.clause+" [mức tin cậy "+b.conf+"; "+b.st[1]+"]"}).join("; "));
+ if(o.text&&o.text!==o.obj)t.push("Nội dung điều khoản: "+o.text);if(o.cond.length)t.push("Điều kiện: "+o.cond.join(" | "));t.push("Căn cứ: "+o.basis.map(function(b){return b.doc+", "+b.clause+" [mức tin cậy "+b.conf+"; "+b.st[1]+"]"}).join("; "));
  if(o.warns.length)t.push("Cảnh báo: "+o.warns.map(function(w){return w.t}).join(" | "));if(o.tips.length)t.push("Tư vấn thực hành (không phải quy định): "+o.tips.join(" | "));
  t.push("Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.");return t.join("\n")}
 
@@ -456,6 +456,7 @@ function relH(a){return a.length?'<div class="h">Hỏi tiếp</div><div class="r
 function aHtml(o){var h='<div class="card main">'+(o.q?'<div class="q">'+esc(o.q)+'</div>':"")+(o.s&&o.s.src==="ref"?'<div class="w l3">Số liệu này KHÔNG lấy từ văn bản đã up trong Project mà từ nguồn tham khảo (dữ liệu KTS), chưa đối chiếu văn bản gốc. Kiểm tra lại trước khi dùng.</div>':'<div class="mu" style="margin-bottom:4px">✔ Nguồn: văn bản đã up trong Project</div>')+'<div class="h2">Kết luận</div>';
  if(o.pre)h+='<div class="pre">'+esc(o.pre)+'</div>';if(o.vd)h+='<div class="vd '+(o.vd.ok?"ok":"er")+'">'+esc(o.vd.t)+'</div>';
  h+='<div class="dim"><i></i><b>'+esc(o.concl)+'</b><i></i></div><div class="obj">'+esc(o.obj)+'</div>';
+ if(o.text&&o.text!==o.obj)h+='<div class="h2">Nội dung điều khoản (đủ các trường hợp)</div><div>'+esc(o.text)+'</div>';
  if(o.cond.length)h+='<div class="h2">Điều kiện</div><ul>'+o.cond.map(function(x){return'<li>'+esc(x)+'</li>'}).join("")+'</ul>';
  h+='<div class="h2">Căn cứ</div>'+o.basis.map(function(b){return'<div class="bs">'+cfb(b.conf)+' <b>'+esc(b.doc)+'</b> · '+esc(b.clause)+' '+chip(b.st)+(function(){var d=docOf(b.doc);return d&&d.file?' <span class="mu">📄 '+esc(d.file)+'</span>':""})()+'</div>'}).join("");
  if(o.warns.length)h+='<div class="h2">Cảnh báo</div>'+o.warns.map(function(w){return'<div class="w l'+w.lv+'">'+esc(w.t)+'</div>'}).join("");
@@ -467,7 +468,8 @@ function showRes(res,q,ps){ps=ps||[];LAST=res;var out=$("out");if(!out)return;
  if(res.kind==="none"){out.innerHTML="";return}
  if(res.kind==="low"){if(ps.length){out.innerHTML=aiCard()+citeH(ps,res.q,1);return}out.innerHTML='<div class="card"><b>Không tìm thấy trong bộ tài liệu hiện có.</b>'+(res.bad&&res.bad.length?'<div class="mu">Không có trong dữ liệu: '+esc(res.bad.join(", "))+'</div>':'<div class="mu">Chưa có điều khoản nào khớp đủ với câu hỏi.</div>')+(ST.ref?'':'<div class="mu" style="margin-top:8px">'+(UD.length?'Không có đoạn nào trong '+UD.length+' file đã upload khớp câu hỏi.':'Chưa upload văn bản nào: vào tab Upload để thêm PDF hoặc Word.')+'</div><button class="btn alt" data-a="ref">Bật nguồn tham khảo (chưa xác thực) rồi tra lại</button>')+'</div>'+(res.sg&&res.sg.length?relH(res.sg).replace('Hỏi tiếp','Có thể bạn muốn hỏi'):'')+aiCard();return}
  var h=aHtml(res),ctx=res.ctx||{},cs=[];if(ctx.g)cs.push(ctx.g);if(ctx.h!=null)cs.push("cao PCCC "+ctx.h+" m");if(ctx.nt)cs.push(ctx.nt+" tầng");if(ctx.loc)cs.push(ctx.loc);
- if(cs.length)h='<div class="ctx">Đang xét: '+esc(cs.join(" · "))+'</div>'+h;if(res.AS!==TODAY)h='<div class="ctx">Tính theo ngày '+vd(res.AS)+'</div>'+h;
+ var fromP=!!(ST.saved&&ctx.g&&ST.p&&ST.p.g===ctx.g&&!ext(norm(res.q||"")).g);
+ if(cs.length)h='<div class="ctx">Đang xét'+(fromP?' theo hồ sơ dự án':'')+': '+esc(cs.join(" · "))+(fromP?'. Muốn hỏi nhóm nhà khác, nêu trong câu hỏi (mầm non, khách sạn, văn phòng...) hoặc đổi ở tab Dự án.':'')+'</div>'+h;if(res.AS!==TODAY)h='<div class="ctx">Tính theo ngày '+vd(res.AS)+'</div>'+h;
   out.innerHTML='<div class="h">Điều khoản trích sẵn đã đối chiếu</div>'+h+aiCard()+(ps.length?citeH(ps,res.q,0):'')}
 var WK0="https://archicode-ai.deenngo041291.workers.dev";function WK(){try{return localStorage.getItem("archicode.wk")||WK0}catch(e){return WK0}}
 var CTX=null,FXC=null,FAILS=[],LQ="",HIST=[];
