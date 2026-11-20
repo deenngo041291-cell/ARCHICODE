@@ -17,7 +17,7 @@ input,select{width:100%;padding:11px 12px;border:1px solid var(--ln);border-radi
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.chip{padding:6px 11px;border:1px solid var(--ln);border-radius:99px;background:var(--sf);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}.chip.on{background:var(--ac);border-color:var(--ac);color:var(--bg)}
 .card{background:var(--sf);border:1px solid var(--ln);border-radius:6px;padding:14px;margin-top:10px}
 .card.main{border-left:3px solid var(--ac)}.q{font-size:13px;color:var(--mu)}
-.h{font-size:13px;color:var(--mu);margin:16px 0 4px;font-weight:600}.h2{font-size:12.5px;color:var(--mu);margin:12px 0 3px;font-weight:600}
+.h{font-size:13px;color:var(--mu);margin:16px 0 4px;font-weight:600}.fa{font-size:19px;font-weight:700;line-height:1.35;margin:4px 0 8px}.h2{font-size:12.5px;color:var(--mu);margin:12px 0 3px;font-weight:600}
 .dim{display:flex;align-items:center;margin:8px 0 2px}.dim i{flex:1;height:1px;background:var(--ac);position:relative;min-width:14px}
 .dim i:first-child::before,.dim i:last-child::after{content:"";position:absolute;top:-7px;width:1px;height:15px;background:var(--ac)}.dim i:first-child::before{left:0}.dim i:last-child::after{right:0}
 .dim b{padding:0 12px;font-size:28px;line-height:1.15;color:var(--ac);text-align:center;font-variant-numeric:tabular-nums}
@@ -563,7 +563,7 @@ function exAnsHtml(ps,q,inner){var R=exAns(ps,q);if(!R.length)return null;
  t='<div class="mu" style="margin-bottom:4px">✔ Nguồn: văn bản đã up, trích tự động nguyên văn từ file</div>'+(ps.part?'<div class="w l2">Khớp một phần với câu hỏi, hãy kiểm tra kỹ.</div>':'')+h+'<div class="mu" style="margin-top:8px">Lưu ý thêm: '+(ob?esc(ob)+' ':'')+'Bảng có thể lệch cột khi đọc từ PDF; con số nằm ở điều khác hoặc phụ lục thì xem mục 3.</div><div class="mu">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>';
  return inner?t:'<div class="card main">'+t+'</div>'}
 /* ---------- Trả lời đáp án: tổng hợp tức thì bằng quy tắc từ văn bản đã up; AI chỉ là tùy chọn ---------- */
-var OBJS=[["đường thoát nạn",/(?:đường|lối đi) thoát nạn/i],["lối ra thoát nạn",/lối ra thoát nạn|lối thoát nạn|lối ra\b/i],["hành lang",/hành lang/i],["buồng thang",/buồng thang/i],["thang bộ",/thang bộ|cầu thang/i],["cửa",/\bcửa\b/i]];
+var OBJS=[["đường thoát nạn",/(?:đường|lối đi) thoát nạn/i],["lối ra thoát nạn",/lối ra thoát nạn|lối thoát nạn|lối ra\b/i],["hành lang",/hành lang/i],["buồng thang",/buồng thang/i],["thang bộ",/thang bộ|cầu thang/i],["phòng ở",/phòng ở(?![\p{L}])/iu],["phòng bếp",/phòng bếp/i],["phòng vệ sinh",/phòng vệ sinh/i],["phòng ngủ",/phòng ngủ/i],["cửa",/\bcửa\b/i]];
 function objOf(t){var b=null;OBJS.forEach(function(o){var m=o[1].exec(t);if(m&&(!b||m.index<b.i))b={i:m.index,n:o[0]}});return b?b.n:""}
 function qDims(q){var l=q.toLowerCase(),a=[];if(/chiều cao|độ cao|\bcao\b/.test(l))a.push("chiều cao");if(/chiều rộng|bề rộng|\brộng\b/.test(l))a.push("chiều rộng");if(/chiều dài|\bdài\b/.test(l))a.push("chiều dài");if(/khoảng cách/.test(l))a.push("khoảng cách");return a}
 function dname(s){s=s.toLowerCase();var t=/thông thủy/.test(s)?" thông thủy":"";return/chiều cao/.test(s)?"chiều cao"+t:/chiều rộng|bề rộng/.test(s)?"chiều rộng"+t:s}
@@ -577,8 +577,9 @@ function ansPs(q){var A=sd(q,10).slice(0,7).concat(defPs(q)),seen={},out=[];A.fo
 function defPs(q){var qs=Object.keys(bt(norm(q))),R=[];IDX.forEach(function(c){if(!/^\s*1\.\d+(?:\.\d+)?\.?\s/.test(c.t)&&!/thuật ngữ|giải thích từ ngữ|định nghĩa/i.test(c.t.slice(0,200)))return;var h=0;qs.forEach(function(w){if(c.tk[w])h++});if(h>=1)R.push({c:c,h:h})});R.sort(function(a,b){return b.h-a.h||a.c.p-b.c.p});return R.slice(0,3)}
 function cap1(t){return t?t.charAt(0).toUpperCase()+t.slice(1):t}
 function shortT(t,n){t=String(t).replace(/\s+/g," ").trim();return t.length>n?t.slice(0,n).replace(/\s+\S*$/,"")+"…":t}
-function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),S=[];
- ansPs(q).forEach(function(x){segs(x.text).forEach(function(g){var tk=bt(norm(g.x)),h=0;qs.forEach(function(w){if(tk[w])h++});if(!h)return;S.push({doc:x.doc,p:x.page,k:g.k,x:g.x,h:h,o:objOf(g.x),pr:pairsOf(g.x),def:/^1\.\d/.test(g.k)})})});
+function clsOf(g){var re=/\s*(?:;\s*)?[–\-•]\s*(?=Đối với)/g,p=g.x.split(re);if(p.length<3)return[g];var pre=p[0].replace(/[:;]\s*$/,""),o=[];for(var i=1;i<p.length;i++)o.push({k:g.k,x:(pre+": "+p[i]).trim()});return o}
+function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),S=[];if(!qd.length&&!/\b(bao nhieu|toi thieu|toi da|khoang cach|dien tich|do day|do doc|kich thuoc|so luong)\b/.test(norm(q)))return"";var need=qs.length<=2?1:Math.ceil(qs.length/2);
+ ansPs(q).forEach(function(x){segs(x.text).reduce(function(a,g){return a.concat(clsOf(g))},[]).forEach(function(g){var tk=bt(norm(g.x)),h=0;qs.forEach(function(w){if(tk[w])h++});if(h<need)return;S.push({doc:x.doc,p:x.page,k:g.k,x:g.x,h:h,o:objOf(g.x),pr:pairsOf(g.x),def:/^1\.\d/.test(g.k)})})});
  var okD=function(n){return!qd.length||qd.some(function(d){return n.indexOf(d)===0})},
  cmp=function(a,b){return b.h-a.h||b.pr.ord.length-a.pr.ord.length},
  val=S.filter(function(s){return!s.def&&s.pr.ord.some(okD)}).sort(cmp),
@@ -592,10 +593,10 @@ function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),
  rel=val.filter(function(s){return qo&&s.o&&s.o!==qo&&pri.indexOf(s)<0}).slice(0,2),
  defs=S.filter(function(s){return s.def&&s.o&&(s.o===on||rel.some(function(r){return r.o===s.o}))}).sort(cmp).slice(0,2),nt=[];
  defs.forEach(function(d){nt.push('Định nghĩa (điều '+esc(d.k)+', trang '+d.p+'): '+esc(shortT(d.x.replace(/^\S+\s+/,""),170)))});
- rel.forEach(function(r){nt.push('<b>'+esc(cap1(r.o))+'</b> là khái niệm khác ('+(r.k?'điều '+esc(r.k)+', ':'')+'trang '+r.p+'): '+esc(r.pr.ord.map(function(n){return n+" "+r.pr.P[n].join(" / ")}).join("; ")))});
+ rel.forEach(function(r){nt.push('Với <b>'+esc(r.o)+'</b> ('+(r.k?'điều '+esc(r.k)+', ':'')+'trang '+r.p+'): '+esc(r.pr.ord.map(function(n){return n+" "+r.pr.P[n].join(" / ")}).join("; ")))});
  if(ord.some(function(n){return M[n].length>1}))nt.push('Có nhiều giá trị theo nhóm nhà, số người hoặc điều kiện: xem nguyên văn ở mục 3.');
  var mt=metaOf(pri[0].doc).v,st=mt?dstat(mt,ST.as):null;
- return'<div class="mu" style="margin-bottom:4px">✔ Tổng hợp tức thì từ văn bản đã up (theo quy tắc, không dùng AI)</div><div class="h2">'+esc(cap1(on||"Kết quả"))+': '+esc(l1)+'</div><div>'+l2+(st?' '+chip(st):'')+'</div>'+(nt.length?'<div class="mu" style="margin-top:6px"><b>Lưu ý thêm:</b></div>'+nt.slice(0,3).map(function(t){return'<div class="mu">• '+t+'</div>'}).join(""):'')+'<div class="mu" style="margin-top:6px">Ghép chiều–giá trị theo cách hiểu của tôi từ nguyên văn file; bảng PDF có thể lệch cột.</div><div class="mu">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>'}
+ return'<div class="mu" style="margin-bottom:4px">✔ Tổng hợp tức thì từ văn bản đã up (theo quy tắc, không dùng AI)</div><div class="fa">'+esc(cap1(on||"Kết quả"))+': '+esc(l1)+'</div><div class="mu">Căn cứ: '+l2+(st?' '+chip(st):'')+'</div>'+(nt.length?'<div class="mu" style="margin-top:6px"><b>Lưu ý thêm:</b></div>'+nt.slice(0,3).map(function(t){return'<div class="mu">• '+t+'</div>'}).join(""):'')+'<div class="mu" style="margin-top:6px">Ghép chiều–giá trị theo cách hiểu của tôi từ nguyên văn file; bảng PDF có thể lệch cột.</div><div class="mu">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>'}
 function ansPrompt(q){return"Chỉ dựa vào các đoạn trích kèm theo, trả lời ngắn (tối đa 100 từ) bằng tiếng Việt, 3 dòng: (1) đáp án có số + đơn vị + đối tượng, tách từng chiều nếu có; (2) \"Theo điều/bảng … của QCVN …, trang …\"; (3) \"Lưu ý thêm:\" thuật ngữ gần nghĩa có giá trị khác. Không bịa; không có thì ghi \"Không tìm thấy trong bộ tài liệu hiện có\". Câu hỏi: "+q}
 function ansRun(q){var bx=$("ansOut");if(!bx)return;var h=ruleAnsHtml(q)||exAnsHtml(sd(q),q,1)||'<div class="mu">Chưa có điều khoản khớp. Xem đoạn trích ở mục 3.</div>';
  bx.innerHTML=h+'<div style="margin-top:8px"><button class="chip" data-a="ai1">Nhờ AI diễn giải lại (chậm hơn, cần Worker)</button></div><div id="ansAi" style="margin-top:6px"></div>'}
@@ -734,14 +735,33 @@ var UD=[],IDX=[],DF={},AVG=1,MEM=[],NOIDB=0,PJ=null;
 function idb(){return window._db||(window._db=new Promise(function(ok,no){try{var r=indexedDB.open("archicode-docs",1);r.onupgradeneeded=function(){r.result.createObjectStore("docs",{keyPath:"id"})};r.onsuccess=function(){ok(r.result)};r.onerror=function(){no(r.error)}}catch(e){no(e)}}))}
 function dbOp(m,a){return idb().then(function(d){return new Promise(function(ok,no){var t=d.transaction("docs",m==="getAll"?"readonly":"readwrite"),q=t.objectStore("docs")[m](a);t.oncomplete=function(){ok(q.result)};t.onerror=function(){no(t.error)}})})}
 function loadIdx(){dbOp("getAll").catch(function(){NOIDB=1;return MEM}).then(function(a){UD=a||[];build();srcBar();if(ST.tab==="up")vUp();syncShared()})}
-function build(){IDX=[];DF={};var tot=0;UD.forEach(function(d){d.chunks.forEach(function(c){var n=norm(c.t),tk={},len=0;n.trim().split(/[^a-z0-9]+/).forEach(function(w){if(w.length>1&&/[a-z]/.test(w)){tk[w]=(tk[w]||0)+1;len++}});tot+=len;var h0=c.t.split("\n")[0];IDX.push({id:d.id,doc:d.name,kind:d.kind,p:c.p,t:c.t,n:n,tk:tk,len:len,hn:norm(h0),dn:norm(d.name)});for(var w in tk)DF[w]=(DF[w]||0)+1})});AVG=IDX.length?tot/IDX.length:1}
+/* chữa lỗi PDF tách chữ: "Đ ố i v ớ i" -> "Đối với" (dùng bộ âm tiết lấy từ chính các file sạch đã up) */
+var SYL={},SYLN=0;
+var VOW=/[aeiouyàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]/;
+function lettersLen(x){return x.replace(/[^\p{L}\p{M}]/gu,"").length}
+function badLine(l){var t=l.split(/\s+/).filter(function(x){return/\p{L}/u.test(x)});if(t.length<8)return false;var one=0;t.forEach(function(x){if(lettersLen(x)===1)one++});return one/t.length>.15}
+function buildSyl(lines){SYL={};"thủy thông chiều cao rộng dài sâu dày sinh vệ bếp phòng ngủ khách hộ chung cư tầng hầm thang bộ máy thoát nạn cửa sổ lối ra hành lang diện tích khoảng cách không được nhỏ hơn lớn tối thiểu đa với đối trong nhà công trình quy chuẩn kỹ thuật yêu cầu và của các có là cho để khi theo từ đến trên dưới mét người chữa cháy ngăn giới hạn chịu lửa bậc cấp nguy hiểm sàn mái tường vách kết cấu bảo vệ nước chống thấm bể chứa ngầm sinh hoạt kỹ thuật phải bố trí đảm bảo an toàn thiết kế xây dựng tiêu chuẩn điều khoản mục bảng phụ lục độ dốc rãnh thoát hố ga ống cống cấp nóng lạnh hồ bơi bồn tắm gara đỗ xe chiếu sáng thông gió tự nhiên nhân tạo cách âm nhiệt lan can tay vịn bậc thềm sảnh tiền đại sảnh văn phòng khách sạn thương mại bệnh viện trường học ở".split(" ").forEach(function(w){SYL[w]=3});lines.forEach(function(l){l=l.normalize("NFC").toLowerCase();if(badLine(l))return;var m=l.match(/[\p{L}\p{M}]+/gu)||[];m.forEach(function(w){if(w.length<=7&&VOW.test(w))SYL[w]=(SYL[w]||0)+1})});SYLN=Object.keys(SYL).length}
+function sylCost(w){var f=SYL[w];if(!f)return 0;if(w.length===1&&f<3)return 0;return 1+.8*(1-Math.min(1,Math.log(1+f)/Math.log(300)))}
+function segGroup(s){var lo=s.toLowerCase(),n=s.length,B=[0],P=[-1],i,k;for(i=1;i<=n;i++){B[i]=1e9;P[i]=-1;for(k=1;k<=7&&k<=i;k++){var c=sylCost(lo.slice(i-k,i));if(c&&B[i-k]+c<B[i]){B[i]=B[i-k]+c;P[i]=k}}
+ if(B[i-1]+4<B[i]){B[i]=B[i-1]+4;P[i]=-1}}
+ var out=[],j=n,unk="";while(j>0){if(P[j]>0){if(unk){out.unshift(unk);unk=""}out.unshift(s.slice(j-P[j],j));j-=P[j]}else{unk=s[j-1]+unk;j--}}if(unk)out.unshift(unk);return out.join(" ")}
+function healLine(l){l=l.normalize("NFC");if(!badLine(l))return l;
+ var tk=l.match(/[\p{L}\p{M}]+|[^\p{L}\p{M}\s]+|\s+/gu)||[],out="",grp="",gap=0;
+ var sp=false;function flush(){if(grp){out+=segGroup(grp);grp=""}}
+ tk.forEach(function(t){if(/^\s+$/.test(t)){if(!grp)out+=" ";else sp=true;return}if(/^[\p{L}\p{M}]/u.test(t)){grp+=t;sp=false;return}flush();if(sp)out+=" ";sp=false;out+=t});flush();
+ // dọn khoảng trắng quanh số và dấu câu
+ out=out.replace(/(\d)\s*([.,])\s*(?=\d)/g,"$1$2").replace(/\bm\s+2\b/g,"m2").replace(/\s+([,.;:)%])/g,"$1").replace(/\(\s+/g,"(").replace(/[ \t]+/g," ").trim();return out}
+function healT(t){return String(t).split("\n").map(healLine).join("\n")}
+
+
+function build(){IDX=[];DF={};var tot=0,LL=[];UD.forEach(function(d){d.chunks.forEach(function(c){c.t.split("\n").forEach(function(l){LL.push(l)})})});buildSyl(LL);UD.forEach(function(d){d.chunks.forEach(function(c){var tt=healT(c.t),n=norm(tt),tk={},len=0;n.trim().split(/[^a-z0-9]+/).forEach(function(w){if(w.length>1&&/[a-z]/.test(w)){tk[w]=(tk[w]||0)+1;len++}});tot+=len;var h0=tt.split("\n")[0];IDX.push({id:d.id,doc:d.name,kind:d.kind,p:c.p,t:tt,n:n,ns:n.replace(/ /g,""),tk:tk,len:len,hn:norm(h0),dn:norm(d.name)});for(var w in tk)DF[w]=(DF[w]||0)+1})});AVG=IDX.length?tot/IDX.length:1}
 function idf(w){var N=IDX.length,d=DF[w]||0;return Math.log(1+(N-d+.5)/(d+.5))}
 function sd(q,N){var n=norm(q),qs=Object.keys(bt(n)),lq=q.toLowerCase(),dm=/\b(qcvn|qc|tcvn|tc)\s*0*(\d{1,5})/.exec(lq.replace(/[:\/]/g," ")),dk=dm?" "+(dm[1][0]==="t"?"tcvn":"qcvn")+" "+(dm[2].length<2?"0"+dm[2]:dm[2]):"",
  lb=/\b(bảng|điều|mục|phụ lục)\s+([a-zđ]?\.?\d+(?:\.\d+)*|[a-z])(?=\s|$|[.,?])/.exec(lq),lbl=lb?norm(lb[1]+" "+lb[2]).trim():"",nm=lq.match(/\b\d+(?:\.\d+){1,5}\b/g)||[];
  if(!IDX.length||(!qs.length&&!lbl&&!nm.length))return[];
  var ex=toks(n).filter(function(w){return qs.indexOf(w)<0}),ord=n.trim().split(" ").filter(function(w){return qs.indexOf(w)>=0});
- function go(cov){var R=[];IDX.forEach(function(c){var s=0,m=0;qs.forEach(function(w){var f=c.tk[w];if(f){m++;s+=idf(w)*(f*2.2)/(f+1.2*(.25+.75*c.len/AVG));if(c.hn.indexOf(" "+w+" ")>=0)s+=idf(w)*.8}else if(c.dn.indexOf(" "+w+" ")>=0){m+=.5;s+=.6}});
-  var b=0;if(lbl&&c.hn.indexOf(" "+lbl+" ")>=0)b+=5;nm.forEach(function(x){if(c.hn.indexOf(" "+norm(x).trim()+" ")===0)b+=5});
+ function go(cov){var R=[];IDX.forEach(function(c){var s=0,m=0;qs.forEach(function(w){var f=c.tk[w];if(f){m++;s+=idf(w)*(f*2.2)/(f+1.2*(.25+.75*c.len/AVG));if(c.hn.indexOf(" "+w+" ")>=0)s+=idf(w)*.8}else if(c.dn.indexOf(" "+w+" ")>=0){m+=.5;s+=.6}else if(w.length>=4&&c.ns&&c.ns.indexOf(w)>=0){m+=.7;s+=idf(w)*.5}});
+  var nh=0;qs.forEach(function(w){if(w.length>2&&c.dn.indexOf(" "+w+" ")>=0)nh++});if(nh>=2){m+=nh*.5;s*=1.5}var b=0;if(lbl&&c.hn.indexOf(" "+lbl+" ")>=0)b+=5;nm.forEach(function(x){if(c.hn.indexOf(" "+norm(x).trim()+" ")===0)b+=5});
   if(dk){if(c.dn.indexOf(dk)>=0)b+=2;else s*=.35}
   var r=qs.length?m/qs.length:1;if(!b&&(!m||r<cov))return;ex.forEach(function(w){if(c.tk[w])s+=idf(w)*.4});
   for(var i=0;i<ord.length-1;i++)if(c.n.indexOf(" "+ord[i]+" "+ord[i+1]+" ")>=0)s+=1.5;R.push({c:c,s:s*(.5+r)+b})});
@@ -756,7 +776,7 @@ function pdfjs(){return PJ||(PJ=(async function(){var m=await import(URL.createO
 function chunk(s,p,ch){var ls=s.split("\n").map(function(x){return x.replace(/\s+/g," ").trim()}).filter(Boolean),cur="";
  ls.forEach(function(l){var hd=/^(\d+(\.\d+)+\.?|[A-ZĐ]\.\d+(\.\d+)*|Điều \d+|Bảng [A-Z0-9.]+|Phụ lục [A-Z])/.test(l);if(cur&&(cur.length+l.length>900||(hd&&cur.length>250))){ch.push({p:p,t:cur});cur=""}cur+=(cur?"\n":"")+l});if(cur.trim())ch.push({p:p,t:cur})}
 async function readPdf(f,st){var m=await pdfjs(),d=await m.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise,ch=[],tx=0,bad=0,alln=0,emp=0;
- function jn(tc){var o="";tc.items.forEach(function(it){if(typeof it.str==="string")o+=it.str+(it.hasEOL?"\n":" ")});return o}
+ function jn(tc){var o="",px=null,py=0,pw=0;tc.items.forEach(function(it){if(typeof it.str!=="string")return;var tr=it.transform||[1,0,0,1,0,0],x=tr[4],y=tr[5],h=Math.abs(tr[3])||Math.abs(tr[0])||10;if(px!==null&&o){if(Math.abs(y-py)>h*.5){if(!/\n$/.test(o))o+="\n"}else if(x-(px+pw)>h*.12&&!/\s$/.test(o)&&!/^\s/.test(it.str))o+=" "}o+=it.str;if(it.hasEOL&&!/\n$/.test(o))o+="\n";px=x;py=y;pw=it.width||0});return o}
  for(var p=1;p<=d.numPages;p++){st(f.name+": trang "+p+"/"+d.numPages);var pg=await d.getPage(p),s=jn(await pg.getTextContent());
   if(!s.trim()){try{s=jn(await pg.getTextContent({includeMarkedContent:false,disableNormalization:true}))}catch(e){}}
   var t=s.replace(/\s+/g,"");if(!t)emp++;tx+=s.trim().length;alln+=t.length;bad+=(t.match(/[\u0000-\u001f\ue000-\uf8ff\ufffd]/g)||[]).length;chunk(s,p,ch)}
