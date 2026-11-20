@@ -474,7 +474,7 @@ function aHtml(o,sp){var h='<div class="card main">'+(o.q?'<div class="q">'+esc(
  return h+'<button class="btn alt" data-a="cp">Sao chép kèm căn cứ</button></div>'}
 function showRes(res,q,ps){ps=ps||[];LAST=res;var out=$("out");if(!out)return;
  if(res.kind==="none"){out.innerHTML="";return}
- if(res.kind==="low"){if(ps.length){out.innerHTML=aiCard()+citeH(ps,res.q,1);return}out.innerHTML='<div class="card"><b>Không tìm thấy trong bộ tài liệu hiện có.</b>'+(res.bad&&res.bad.length?'<div class="mu">Không có trong dữ liệu: '+esc(res.bad.join(", "))+'</div>':'<div class="mu">Chưa có điều khoản nào khớp đủ với câu hỏi.</div>')+(ST.ref?'':'<div class="mu" style="margin-top:8px">'+(UD.length?'Không có đoạn nào trong '+UD.length+' file đã upload khớp câu hỏi.':'Chưa upload văn bản nào: vào tab Upload để thêm PDF hoặc Word.')+'</div><button class="btn alt" data-a="ref">Bật nguồn tham khảo (chưa xác thực) rồi tra lại</button>')+'</div>'+(res.sg&&res.sg.length?relH(res.sg).replace('Hỏi tiếp','Có thể bạn muốn hỏi'):'')+aiCard();return}
+ if(res.kind==="low"){if(ps.length){out.innerHTML=SEC(1,"Trả lời đáp án")+'<div class="card mu">Chưa có điều khoản trích sẵn khớp. Xem đoạn trích từ văn bản ở mục 3 hoặc hỏi trợ lý AI.</div>'+SEC(2,"Tư vấn")+aiCard()+SEC(3,"Trích dẫn theo văn bản")+citeH(ps,res.q,1);return}out.innerHTML='<div class="card"><b>Không tìm thấy trong bộ tài liệu hiện có.</b>'+(res.bad&&res.bad.length?'<div class="mu">Không có trong dữ liệu: '+esc(res.bad.join(", "))+'</div>':'<div class="mu">Chưa có điều khoản nào khớp đủ với câu hỏi.</div>')+(ST.ref?'':'<div class="mu" style="margin-top:8px">'+(UD.length?'Không có đoạn nào trong '+UD.length+' file đã upload khớp câu hỏi.':'Chưa upload văn bản nào: vào tab Upload để thêm PDF hoặc Word.')+'</div><button class="btn alt" data-a="ref">Bật nguồn tham khảo (chưa xác thực) rồi tra lại</button>')+'</div>'+(res.sg&&res.sg.length?relH(res.sg).replace('Hỏi tiếp','Có thể bạn muốn hỏi'):'')+aiCard();return}
  var h=aHtml(res,1),ctx=res.ctx||{},cs=[];if(ctx.g)cs.push(ctx.g);if(ctx.h!=null)cs.push("cao PCCC "+ctx.h+" m");if(ctx.nt)cs.push(ctx.nt+" tầng");if(ctx.loc)cs.push(ctx.loc);
  var fromP=!!(ST.saved&&ctx.g&&ST.p&&ST.p.g===ctx.g&&!ext(norm(res.q||"")).g);
  if(cs.length)h='<div class="ctx">Đang xét'+(fromP?' theo hồ sơ dự án':'')+': '+esc(cs.join(" · "))+(fromP?'. Muốn hỏi nhóm nhà khác, nêu trong câu hỏi (mầm non, khách sạn, văn phòng...) hoặc đổi ở tab Dự án.':'')+'</div>'+h;if(res.AS!==TODAY)h='<div class="ctx">Tính theo ngày '+vd(res.AS)+'</div>'+h;
@@ -585,7 +585,7 @@ function sd(q){var n=norm(q),qs=Object.keys(bt(n)),lq=q.toLowerCase(),dm=/\b(qcv
   var r=qs.length?m/qs.length:1;if(!b&&(!m||r<cov))return;ex.forEach(function(w){if(c.tk[w])s+=idf(w)*.4});
   for(var i=0;i<ord.length-1;i++)if(c.n.indexOf(" "+ord[i]+" "+ord[i+1]+" ")>=0)s+=1.5;R.push({c:c,s:s*(.5+r)+b})});
   R.sort(function(a,b){return b.s-a.s});return R.length?R.slice(0,4).filter(function(x){return x.s>=R[0].s*.5}):R}
- var R=go(qs.length>2?.6:1),part=0;if(!R.length&&qs.length>2){R=go(.4);part=1}R.part=part;return R}
+ var R=go(qs.length>2?.6:1),part=0;if(!R.length){R=go(qs.length>2?.4:.5);part=1}R.part=part;return R}
 function hl(t,q){var e=esc(t),ws=uniq(q.toLowerCase().split(/[^\p{L}\d]+/u).filter(function(w){return w.length>1&&SW.indexOf(norm(w))<0}));
  if(ws.length)e=e.replace(new RegExp("("+ws.map(function(w){return w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}).join("|")+")","giu"),"<mark>$1</mark>");return e.replace(/\n/g,"<br>")}
 function win(c,qs){var L=c.t.split("\n");if(L.length<5)return{w:c.t,all:0};var b=-1,bs=0;L.forEach(function(l,i){var tk=bt(norm(l)),s=0;qs.forEach(function(w){if(tk[w])s++});if(s>bs){bs=s;b=i}});if(b<0)return{w:c.t,all:0};var a=Math.max(0,b-1),e=Math.min(L.length,b+3);return{w:(a>0?L[0]+"\n…\n":"")+L.slice(a,e).join("\n"),all:1}}
@@ -729,7 +729,7 @@ async function syncShared(){var st=function(t){window._sst=t;if($("sst"))$("sst"
  if(location.protocol==="file:")return;
  try{if(m&&rp){var r=await fetch("https://api.github.com/repos/"+m[1]+"/"+rp+"/contents/docs",TK()?{headers:{Authorization:"Bearer "+TK()}}:undefined);if(r.ok)names=(await r.json()).filter(function(f){return/\.(pdf|docx|doc|xlsx|xls|csv|txt|md)$/i.test(f.name)}).map(function(f){return{n:f.name,k:f.sha}})}}catch(e){}
  if(!names)try{var r2=await fetch("docs/danh-sach.json",{cache:"no-cache"});if(r2.ok)names=(await r2.json()).map(function(n){return{n:n,k:null}})}catch(e){}
- if(!names){return}
+ if(!names){st('Không lấy được danh sách file trong thư mục docs (GitHub API có thể đang giới hạn lượt gọi, hoặc sai tên repo). Cách khắc phục: thêm file docs/danh-sach.json chứa danh sách tên file, ví dụ ["QCVN_06-2022_BXD___sd_2023.pdf"].');if(ST.tab==="vb"&&!ST.f.t)vVb();return}
  var ch=0;FAILS=[];
  for(var i=0;i<names.length;i++){var n=names[i].n,u="docs/"+encodeURIComponent(n),k=names[i].k||await hk(u),ex=UD.filter(function(d){return d.shared&&d.name===n})[0];
   if(ex&&ex.sha===k)continue;
@@ -740,9 +740,15 @@ async function syncShared(){var st=function(t){window._sst=t;if($("sst"))$("sst"
    await dbOp("put",rec).catch(function(){});UD=UD.filter(function(d){return d.id!==rec.id}).concat(rec);ch=1;build();srcBar()}catch(e){FAILS.push([n,"không tải/đọc được: "+((e&&e.message)||"lỗi mạng hoặc file hỏng")])}}
  var keep=names.map(function(x){return x.n});
  for(var j=0;j<UD.length;j++){var d=UD[j];if(d.shared&&keep.indexOf(d.name)<0){await dbOp("delete",d.id).catch(function(){});ch=1}}
- UD=UD.filter(function(d){return!d.shared||keep.indexOf(d.name)>=0});build();srcBar();st("Văn bản dùng chung: "+(names.length-FAILS.length)+"/"+names.length+" file đọc được"+(FAILS.length?" ("+FAILS.length+" lỗi, xem tab Upload)":""));if(ST.tab==="up")vUp()}
+ UD=UD.filter(function(d){return!d.shared||keep.indexOf(d.name)>=0});build();srcBar();st("Văn bản dùng chung: "+(names.length-FAILS.length)+"/"+names.length+" file đọc được"+(FAILS.length?" ("+FAILS.length+" lỗi, xem tab Upload)":""));if(ST.tab==="up")vUp();else if(ST.tab==="vb"&&!ST.f.t)vVb()}
 
-function udH(){var a=UD.slice().sort(function(x,y){return(y.shared?1:0)-(x.shared?1:0)||x.name.localeCompare(y.name)});return'<div class="h">Tất cả văn bản đã up: '+a.length+' file đọc toàn văn'+(FAILS.length?' · '+FAILS.length+' lỗi':'')+'</div>'+(a.length?'<div class="card">'+a.map(function(d){return'<div class="it"><b>'+esc(d.name)+'</b><div class="r">'+(d.shared?"Dùng chung":"Của riêng bạn")+(isSgr(d)?" · Nội bộ SGR":"")+" · "+d.kind.toUpperCase()+(d.kind==="pdf"?" · "+d.pages+" trang":"")+'</div></div>'}).join("")+FAILS.map(function(f){return'<div class="it"><b>'+esc(f[0])+'</b><div class="r">⚠ '+esc(f[1])+'</div></div>'}).join("")+'</div>':'<div class="card mu">Chưa có file nào.</div>')+(V.filter(vact).length?'<div class="h">Văn bản có điều khoản trích sẵn</div>':'')}
+function gOf(n){return/^SGR[_ \-]/i.test(n)?"Nội bộ SGR":/qcvn/i.test(n)?"QCVN":/tcvn/i.test(n)?"TCVN":/(qđ|qd[_ -]|ubnd|quyết định|quyet dinh)/i.test(n)?"Địa phương":/(nđ|nd[-_ ]?cp|nghị định|thông tư|tt[-_ ]?\d|luật|luat)/i.test(n)?"Luật, nghị định, thông tư":"Khác"}
+function udH(){var G=["QCVN","TCVN","Địa phương","Nội bộ SGR","Luật, nghị định, thông tư","Khác"],B={};UD.forEach(function(d){var g=gOf(d.name);(B[g]=B[g]||[]).push(d)});
+ var h='<div class="h">Văn bản đã nạp: '+UD.length+' file đọc được'+(FAILS.length?' · '+FAILS.length+' lỗi':'')+'</div><div class="mu" style="margin:4px 0 8px">'+esc(window._sst||"")+'</div>';
+ G.forEach(function(g){var a=(B[g]||[]).sort(function(x,y){return x.name.localeCompare(y.name)});if(!a.length)return;h+='<details class="acc" open><summary>'+esc(g)+'<span class="pv">'+a.length+'</span></summary><div class="bd">'+a.map(function(d){return'<div class="it"><b>'+esc(d.name)+'</b><div class="r">'+(d.shared?"Dùng chung":"Của riêng bạn")+" · "+d.kind.toUpperCase()+(d.kind==="pdf"?" · "+d.pages+" trang":"")+" · "+d.chunks.length+' đoạn có thể tra</div></div>'}).join("")+'</div></details>'});
+ if(FAILS.length)h+='<details class="acc" open><summary>Không đọc được<span class="pv">'+FAILS.length+'</span></summary><div class="bd">'+FAILS.map(function(f){return'<div class="it"><b>'+esc(f[0])+'</b><div class="r">⚠ '+esc(f[1])+'</div></div>'}).join("")+'</div></details>';
+ if(!UD.length&&!FAILS.length)h+='<div class="card mu">Chưa nạp được file nào. Kiểm tra dòng trạng thái ở trên, hoặc tab Upload.</div>';
+ return h+(V.filter(vact).length?'<div class="h">Văn bản có điều khoản trích sẵn</div>':'')}
 function TK(){try{return localStorage.getItem("archicode.tk")||""}catch(e){return""}}
 function ghInfo(){var m=/^([^.]+)\.github\.io$/.exec(location.hostname),r=location.pathname.split("/")[1];return m&&r?{o:m[1],r:r}:null}
 function admH(){var g=ghInfo(),h='<div class="h">Up lên dùng chung (chủ trang)</div><div class="card">';
