@@ -578,7 +578,7 @@ function defPs(q){var qs=Object.keys(bt(norm(q))),R=[];IDX.forEach(function(c){i
 function cap1(t){return t?t.charAt(0).toUpperCase()+t.slice(1):t}
 function shortT(t,n){t=String(t).replace(/\s+/g," ").trim();return t.length>n?t.slice(0,n).replace(/\s+\S*$/,"")+"…":t}
 function clsOf(g){var re=/\s*(?:;\s*)?[–\-•]\s*(?=Đối với)/g,p=g.x.split(re);if(p.length<3)return[g];var pre=p[0].replace(/[:;]\s*$/,""),o=[];for(var i=1;i<p.length;i++)o.push({k:g.k,x:(pre+": "+p[i]).trim()});return o}
-function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),S=[];if(!qd.length&&!/\b(bao nhieu|toi thieu|toi da|khoang cach|dien tich|do day|do doc|kich thuoc|so luong)\b/.test(norm(q)))return"";var need=qs.length<=2?1:Math.ceil(qs.length/2);
+function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),S=[];if(!qd.length&&!qo&&!/\b(bao nhieu|toi thieu|toi da|khoang cach|dien tich|do day|do doc|kich thuoc|so luong|thong thuy|chieu|cao|rong|dai|sau|day|bac|do dai)\b/.test(norm(q)))return"";var need=qs.length<=2?1:Math.ceil(qs.length/2);
  ansPs(q).forEach(function(x){segs(x.text).reduce(function(a,g){return a.concat(clsOf(g))},[]).forEach(function(g){var tk=bt(norm(g.x)),h=0;qs.forEach(function(w){if(tk[w])h++});if(h<need)return;S.push({doc:x.doc,p:x.page,k:g.k,x:g.x,h:h,o:objOf(g.x),pr:pairsOf(g.x),def:/^1\.\d/.test(g.k)})})});
  var okD=function(n){return!qd.length||qd.some(function(d){return n.indexOf(d)===0})},
  cmp=function(a,b){return b.h-a.h||b.pr.ord.length-a.pr.ord.length},
