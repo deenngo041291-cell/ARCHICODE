@@ -598,7 +598,7 @@ function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),
  if(ord.some(function(n){return M[n].length>1}))nt.push('Có nhiều giá trị theo nhóm nhà, số người hoặc điều kiện: xem nguyên văn ở mục 3.');
  var mt=metaOf(pri[0].doc).v,st=mt?dstat(mt,ST.as):null;
  return'<div class="mu" style="margin-bottom:4px">✔ Tổng hợp tức thì từ văn bản đã up (theo quy tắc, không dùng AI)</div><div class="fa">'+esc(cap1(on||"Kết quả"))+': '+esc(l1)+'</div><div class="mu">Căn cứ: '+l2+(st?' '+chip(st):'')+'</div>'+(nt.length?'<div class="mu" style="margin-top:6px"><b>Lưu ý thêm:</b></div>'+nt.slice(0,3).map(function(t){return'<div class="mu">• '+t+'</div>'}).join(""):'')+'<div class="mu" style="margin-top:6px">Ghép chiều–giá trị theo cách hiểu của tôi từ nguyên văn file; bảng PDF có thể lệch cột.</div><div class="mu">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>'}
-function ansPrompt(q){return"Tổng hợp đáp án NGẮN GỌN chỉ từ các đoạn trích [n]. Mỗi mục bắt đầu một dòng riêng, đúng thứ tự: **Kết luận:** 1-2 dòng, mỗi dòng một giá trị (số + đơn vị + đối tượng áp dụng), tách riêng nếu khác nhau theo thuật ngữ, nhóm nhà, số người. **Căn cứ:** văn bản, điều/mục/bảng, trang, kèm [n]. **Lưu ý:** 2-4 ý về điểm DỄ NHẦM và liên quan: thuật ngữ gần nghĩa nhưng giá trị khác (vd đường thoát nạn / lối ra thoát nạn / hành lang / cửa), khác biệt theo nhóm nhà, điều kiện, ngoại lệ, hiệu lực, kèm [n]. **Tư vấn:** 1-2 gợi ý thiết kế (ghi rõ là gợi ý, không phải quy định). Không hỏi lại, không chép dài, không bịa; thiếu căn cứ thì ghi \"Không tìm thấy trong bộ tài liệu hiện có\". Câu hỏi: "+q}
+function ansPrompt(q){return"Tổng hợp đáp án NGẮN GỌN chỉ từ các đoạn trích [n]. Mỗi mục một dòng riêng, đúng thứ tự: **Kết luận:** 1-2 dòng, mỗi dòng một giá trị (số + đơn vị + đối tượng); CHỈ nêu giá trị đúng đối tượng được hỏi, tuyệt đối không gộp số của đối tượng khác. **Căn cứ:** văn bản, điều/mục/bảng, trang, kèm [n]. **Lưu ý:** 2-4 ý về điểm DỄ NHẦM: thuật ngữ gần nghĩa nhưng giá trị khác (vd đường thoát nạn / lối ra thoát nạn / gian phòng / lối đi), nêu số của đối tượng khác ở đây; khác biệt theo nhóm nhà, ngoại lệ, hiệu lực, kèm [n]. **Tư vấn:** 1-2 gợi ý thiết kế (ghi rõ là gợi ý). Không hỏi lại, không chép dài, không bịa; thiếu căn cứ thì ghi \"Không tìm thấy trong bộ tài liệu hiện có\". Câu hỏi: "+q}
 function ansFmt(t){var re=/(?:^|\n)[ \t]*\**[ \t]*(Kết luận|Căn cứ|Lưu ý|Tư vấn(?: thiết kế)?|Điều kiện(?:\/ngoại lệ)?|Cần xác nhận)[ \t]*\**[ \t]*:[ \t]*\**/gi,hs=[],m;
  while((m=re.exec(t)))hs.push({k:m[1].toLowerCase(),a:m.index,b:re.lastIndex});
  if(!hs.length||hs[0].k!=="kết luận")return'<div style="line-height:1.55">'+md(t)+"</div>";
@@ -616,13 +616,13 @@ var ANSC={};
 function dkOf(d){var m=metaOf(d);return m.v?m.v.key:String(d).replace(/\.[A-Za-z0-9]+$/,"")}
 function ansSrc(a,ps){var u=[],re=/\[(\d+)\]/g,m;while((m=re.exec(a)))if(u.indexOf(m[1])<0&&ps[m[1]-1])u.push(m[1]);u.sort(function(x,y){return x-y});if(!u.length)return"";return'<div class="mu" style="margin-top:6px">Nguồn: '+u.map(function(n){var p=ps[n-1];return"["+n+"] "+esc(dkOf(p.doc))+(p.page?", trang "+esc(String(p.page)):"")}).join("; ")+"</div>"}
 function ansRun(q){var bx=$("ansOut");if(!bx)return;var h=ruleAnsHtml(q)||exAnsHtml(sd(q),q,1)||'<div class="mu">Chưa có điều khoản khớp. Xem đoạn trích ở mục 3.</div>';
- bx.innerHTML='<div id="ansAi"></div><details class="acc" id="ansRule" open><summary>Căn cứ trích tự động từ văn bản</summary><div class="bd">'+h+'</div></details><div style="margin-top:8px"><button class="chip" data-a="ai1">Tổng hợp lại bằng AI</button></div>';
+ bx.innerHTML='<div id="ansAi"></div><details class="acc" id="ansRule"><summary>Bản trích tự động từ văn bản (chưa chắt lọc)</summary><div class="bd"><div class="w l2" style="margin-bottom:8px">Bản này ghép số theo từ khóa nên có thể lẫn số của đối tượng khác (ví dụ chiều cao gian phòng với chiều cao đường thoát nạn). Hãy đối chiếu điều khoản gốc.</div>'+h+'</div></details><div style="margin-top:8px"><button class="chip" data-a="ai1">Tổng hợp lại bằng AI</button></div>';
  ansAI(null)}
 async function ansAI(b){var bx=$("ansAi"),w=WK(),q=LQ,rd=$("ansRule");if(!bx)return;
- if(!w){bx.innerHTML='<div class="mu">Chưa cài Worker AI (tab Upload, mục Trợ lý AI), đang hiện bản trích tự động bên dưới.</div>';return}
- var all=ansPs(q);if(!all.length)return;
+ if(!w){bx.innerHTML='<div class="mu">Chưa cài Worker AI (tab Upload, mục Trợ lý AI), đang hiện bản trích tự động bên dưới.</div>';if(rd)rd.open=true;return}
+ var all=ansPs(q);if(!all.length){if(rd)rd.open=true;return}
  var key=q+"|"+ST.as;if(!b&&ANSC[key]){bx.innerHTML=ANSC[key];if(rd)rd.open=false;return}
- if(b)b.disabled=true;if(rd)rd.open=true;
+ if(b)b.disabled=true;
  var tries=[{n:10,len:1200},{n:4,len:800}],last=null;
  for(var i=0;i<tries.length;i++){var T=tries[i];bx.innerHTML='<div class="mu">'+(i?"Lần 1 quá hạn, thử lại với ít đoạn trích hơn…":"🤖 AI đang tổng hợp đáp án từ văn bản đã up (tối đa 40 giây)…")+"</div>";
   var ps=all.slice(0,T.n).map(function(x){return{doc:x.doc,page:x.page,text:x.text.slice(0,T.len)}});
