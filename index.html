@@ -574,25 +574,29 @@ function pairsOf(x){var re=new RegExp(QTY.source,QTY.flags),dm=/(chiều cao th�
   if(/^(chiều|khoảng)/.test(d.n)&&!/\d\s*(mm|cm|m)$/.test(m[0].trim()))continue;
   var v=qsym(m[0]);if(!/^[≥≤><]/.test(v)){var bw=x.slice(d.i,mi);if(/không(?: được)? nhỏ hơn\s*:/.test(bw))v="≥ "+v;else if(/không(?: được)? (?:lớn hơn|quá)\s*:/.test(bw))v="≤ "+v}if(!P[d.n]){P[d.n]=[];ord.push(d.n)}if(P[d.n].indexOf(v)<0)P[d.n].push(v)}
  return{P:P,ord:ord}}
-function tctx(tt,S){var L=tt.split("\n"),bi=-1,i,j,ht=tt.indexOf("¦")>=0;
+function tctx(tt,S){var L=tt.split("\n"),bi=-1,i,j,ht=tt.indexOf("¦")>=0||(tt.match(/(?:[–—−-]|\d{2,3})(?:\s+(?:[–—−-]|\d{2,3})){5,}\s*$/gm)||[]).length>=2;
  for(i=0;i<L.length;i++)if(/^Bảng\s+[A-Z]?\.?\d+(?:\.\d+)*(?:\s*[–\-:]|\s*$)/.test(L[i]))bi=i;
  if(bi>=0){var hd=[L[bi]];for(j=bi+1;j<L.length&&j<bi+8;j++){hd.push(L[j]);if(/\(\s*1\s*\)/.test(L[j])&&/\(\s*2\s*\)/.test(L[j]))break}S.cx=hd.join(" ").replace(/\s*¦\s*/g," ").replace(/\s+/g," ").slice(0,420);return tt}
  if(S.cx&&ht)return"[Tiếp bảng] "+S.cx+"\n"+tt;
  if(!ht)S.cx="";return tt}
+function tblCols(H){var cols=[],re=/\b(REI|EI|RE|R|E|I)\s?(\d{2,3})\b/g,mm;while((mm=re.exec(H)))cols.push({r:mm[1].charAt(0)==="R",v:+mm[2]});return cols}
+var TRX=/^(.*?)\s*((?:[–—−-]|\d{2,3})(?:\s+(?:[–—−-]|\d{2,3})){3,})\s*$/;
 function tblSolve(q,ps){var m=/(\d+(?:[.,]\d+)?)\s*mm\b/i.exec(q);if(!m)return null;var t=parseFloat(m[1].replace(",",".")),SK=" gioi han chiu lua day be mm ",nz=function(z){return" "+norm(z).trim()+" "},qs=Object.keys(bt(norm(q))).filter(function(w){return SK.indexOf(" "+w+" ")<0&&!/\d/.test(w)});if(qs.length<2)return null;
  var rows=[],seen={},src="";
- ps.forEach(function(x){var tx=String(x.text),ix=tx.search(/\(\s*1\s*\)/),H=ix>0?tx.slice(0,ix):tx.slice(0,500),cols=[],re=/\b(REI|EI|RE|R|E|I)\s?(\d{2,3})\b/g,mm;while((mm=re.exec(H)))cols.push({r:mm[1].charAt(0)==="R",n:mm[1]+" "+mm[2],v:+mm[2]});if(cols.length<4)return;
-  var par="",wrap=0;tx.slice(ix>0?ix:0).split("\n").forEach(function(l){var hs=l.indexOf("¦")>=0;
-   if(!hs){if(/^\d+\.\s/.test(l)){par=l;wrap=1}else if(wrap)par+=" "+l;return}
-   var p=l.split("¦").map(function(z){return z.trim()}),lab=p.shift(),vs=p.filter(function(z){return z!==""});
-   if(/^\d+\.\s/.test(lab)){par=lab;wrap=1}else wrap=0;if(vs.length<cols.length)return;vs=vs.slice(-cols.length);
+ ps.forEach(function(x){var tx=String(x.text),ix=tx.search(/\(\s*1\s*\)/),cols=tblCols(ix>0?tx.slice(0,ix):tx.slice(0,500));
+  if(cols.length<4){var k=IDX.findIndex(function(c){return c.doc===x.doc&&c.p===x.page&&c.t===tx});for(var b=1;b<=3&&k-b>=0&&cols.length<4;b++){var c=IDX[k-b];if(c.id!==IDX[k].id)break;var j=c.t.search(/\(\s*1\s*\)/);cols=tblCols(j>0?c.t.slice(0,j):c.t.slice(0,700))}}
+  if(cols.length<4)return;
+  var par="",wrap=0;tx.slice(ix>0?ix:0).split("\n").forEach(function(l0){var l=l0.replace(/\s*¦\s*/g," ").replace(/\s+/g," ").trim(),mt=TRX.exec(l);
+   if(!mt){if(/^\d+\.\s/.test(l)){par=l;wrap=1}else if(wrap)par+=" "+l;return}
+   var lab=mt[1],vs=mt[2].split(" ");if(/^\d+\.\s/.test(lab)){par=lab;wrap=1}else wrap=0;if(vs.length<cols.length)return;vs=vs.slice(-cols.length);
    var cx=nz(par+" "+lab),hit=qs.filter(function(w){return cx.indexOf(" "+w+" ")>=0}).length;if(hit/qs.length<.7)return;
    var bR=0,bE=0,mR=1e9,mE=1e9,num=0;cols.forEach(function(c,k){var v=parseFloat(String(vs[k]).replace(",","."));if(isNaN(v))return;num++;if(c.r){mR=Math.min(mR,v);if(v<=t)bR=Math.max(bR,c.v)}else{mE=Math.min(mE,v);if(v<=t)bE=Math.max(bE,c.v)}});if(!num)return;
-   var key=par+"|"+lab;if(seen[key])return;seen[key]=1;if(!src)src=x.doc+", Bảng tr. "+x.page;
+   var key=par+"|"+lab;if(seen[key])return;seen[key]=1;if(!src)src=x.doc+", tr. "+x.page;
    var nm=(par.replace(/[:;]\s*$/,"")+" – "+lab).replace(/\s+/g," ").slice(0,110);
    rows.push({nm:nm,R:bR?"REI "+bR:"không đạt REI"+(mR<1e9?" (cần ≥ "+mR+" mm)":""),E:bE?"EI "+bE:"không đạt EI"+(mE<1e9?" (cần ≥ "+mE+" mm)":"")})})});
  if(!rows.length)return null;
  return{text:"dày "+t+" mm: "+rows.map(function(r){return r.nm+": chịu lực "+r.R+"; không chịu lực "+r.E}).join(" | ")+" ["+src+"]",html:'<div class="mu">Tra bảng tự động theo chiều dày '+t+' mm (chọn mức cao nhất mà chiều dày ≥ số trong ô)</div>'+rows.map(function(r){return'<div class="fa" style="margin:4px 0">'+esc(r.nm)+'<br>Chịu lực: <b>'+esc(r.R)+'</b> · Không chịu lực: <b>'+esc(r.E)+'</b></div>'}).join("")+'<div class="mu">Đọc từ chữ trong PDF ('+esc(src)+'); cần đối chiếu bảng gốc.</div>'}}
+function tblDiag(ps){var a=ps.filter(function(x){return/¦|Tường|REI/.test(x.text)}).slice(0,2);return'<details class="acc" open><summary>Chẩn đoán tra bảng (chụp gửi nhà phát triển)</summary><div class="bd"><div class="mu">Không ghép được bảng. Chữ app đọc được từ PDF ('+ps.length+' đoạn):</div>'+(a.length?a.map(function(x){return'<div class="mu" style="word-break:break-all;margin-top:6px">'+esc(x.doc)+' tr.'+x.page+' · cột REI/EI tìm thấy: '+tblCols(String(x.text).slice(0,600)).length+'<br>'+esc(String(x.text).slice(0,650)).replace(/\n/g," ⏎ ")+'</div>'}).join(""):'<div class="mu">Không đoạn nào chứa bảng.</div>')+'</div></details>'}
 function ansPs(q){var A=[];sd(q,10).slice(0,7).forEach(function(x,k){A.push(x);if(k<3&&x.c.t.indexOf("¦")>=0){var nx=IDX[IDX.indexOf(x.c)+1];if(nx&&nx.id===x.c.id&&Math.abs(nx.p-x.c.p)<=1&&nx.t.indexOf("¦")>=0)A.push({c:nx})}});A=A.concat(defPs(q));var seen={},out=[];A.forEach(function(x){var k=x.c.doc+"|"+x.c.p+"|"+x.c.t.slice(0,40);if(!seen[k]){seen[k]=1;out.push({doc:x.c.doc,page:x.c.p,text:x.c.t})}});return out.slice(0,10)}
 function defPs(q){var qs=Object.keys(bt(norm(q))),R=[];IDX.forEach(function(c){if(!/^\s*1\.\d+(?:\.\d+)?\.?\s/.test(c.t)&&!/thuật ngữ|giải thích từ ngữ|định nghĩa/i.test(c.t.slice(0,200)))return;var h=0;qs.forEach(function(w){if(c.tk[w])h++});if(h>=1)R.push({c:c,h:h})});R.sort(function(a,b){return b.h-a.h||a.c.p-b.c.p});return R.slice(0,3)}
 function cap1(t){return t?t.charAt(0).toUpperCase()+t.slice(1):t}
@@ -635,8 +639,8 @@ function ansFmt(t){var re=/(?:^|\n)[ \t]*\**[ \t]*(Kết luận|Căn cứ|Lưu �
 var ANSC={};
 function dkOf(d){var m=metaOf(d);return m.v?m.v.key:String(d).replace(/\.[A-Za-z0-9]+$/,"")}
 function ansSrc(a,ps){var u=[],re=/\[(\d+)\]/g,m;while((m=re.exec(a)))if(u.indexOf(m[1])<0&&ps[m[1]-1])u.push(m[1]);u.sort(function(x,y){return x-y});if(!u.length)return"";return'<div class="mu" style="margin-top:6px">Nguồn: '+u.map(function(n){var p=ps[n-1];return"["+n+"] "+esc(dkOf(p.doc))+(p.page?", trang "+esc(String(p.page)):"")}).join("; ")+"</div>"}
-function ansRun(q){var bx=$("ansOut");if(!bx)return;var tb=null;try{tb=tblSolve(q,ansPs(q))}catch(e){}window.__th=tb?tb.text:"";var h=ruleAnsHtml(q)||exAnsHtml(sd(q),q,1)||'<div class="mu">Chưa có điều khoản khớp. Xem đoạn trích ở mục 3.</div>';
- bx.innerHTML=(tb?'<div id="ansTb">'+tb.html+'</div>':'')+'<div id="ansAi"></div><details class="acc" id="ansRule"><summary>Bản trích tự động từ văn bản (chưa chắt lọc)</summary><div class="bd"><div class="w l2" style="margin-bottom:8px">Bản này ghép số theo từ khóa nên có thể lẫn số của đối tượng khác (ví dụ chiều cao gian phòng với chiều cao đường thoát nạn). Hãy đối chiếu điều khoản gốc.</div>'+h+'</div></details><div style="margin-top:8px"><button class="chip" data-a="ai1">Tổng hợp lại bằng AI</button></div>';
+function ansRun(q){var bx=$("ansOut");if(!bx)return;var tb=null;try{tb=tblSolve(q,ansPs(q))}catch(e){}window.__th=tb?tb.text:"";var dg=(!tb&&/\d\s*mm/i.test(q))?tblDiag(ansPs(q)):"";var h=ruleAnsHtml(q)||exAnsHtml(sd(q),q,1)||'<div class="mu">Chưa có điều khoản khớp. Xem đoạn trích ở mục 3.</div>';
+ bx.innerHTML=(tb?'<div id="ansTb">'+tb.html+'</div>':dg)+'<div id="ansAi"></div><details class="acc" id="ansRule"><summary>Bản trích tự động từ văn bản (chưa chắt lọc)</summary><div class="bd"><div class="w l2" style="margin-bottom:8px">Bản này ghép số theo từ khóa nên có thể lẫn số của đối tượng khác (ví dụ chiều cao gian phòng với chiều cao đường thoát nạn). Hãy đối chiếu điều khoản gốc.</div>'+h+'</div></details><div style="margin-top:8px"><button class="chip" data-a="ai1">Tổng hợp lại bằng AI</button></div>';
  ansAI(null)}
 var RT=function(e){return e&&(e.name==="AbortError"||[408,429,500,502,503,504,524,529].indexOf(e.st)>=0||/\b5\d\d\b/.test(e.m||""))};
 function ansRace(w,q,all,PL){PL=PL||[{d:0,n:8,len:1600},{d:15000,n:4,len:1300},{d:35000,n:3,len:1000}];
