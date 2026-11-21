@@ -579,23 +579,32 @@ function tctx(tt,S){var L=tt.split("\n"),bi=-1,i,j,ht=tt.indexOf("¦")>=0||(tt.m
  if(bi>=0){var hd=[L[bi]];for(j=bi+1;j<L.length&&j<bi+8;j++){hd.push(L[j]);if(/\(\s*1\s*\)/.test(L[j])&&/\(\s*2\s*\)/.test(L[j]))break}S.cx=hd.join(" ").replace(/\s*¦\s*/g," ").replace(/\s+/g," ").slice(0,420);return tt}
  if(S.cx&&ht)return"[Tiếp bảng] "+S.cx+"\n"+tt;
  if(!ht)S.cx="";return tt}
-function tblCols(H){var cols=[],re=/\b(REI|EI|RE|R|E|I)\s?(\d{2,3})\b/g,mm;while((mm=re.exec(H)))cols.push({r:mm[1].charAt(0)==="R",v:+mm[2]});return cols}
+function tblCols(H){var cols=[],re=/\b(REI|EI|RE|R|E|I)\s?(\d{2,3})\b/g,mm;while((mm=re.exec(H)))cols.push({r:mm[1].charAt(0)==="R",v:+mm[2],n:mm[1]+" "+mm[2]});return cols}
+function tblCap(H){var z=H.replace(/\s*¦\s*/g," ").replace(/\n/g," "),re=/Bảng\s+[A-Z]?\.?\d+(?:\.\d+)*\s*[–—-]\s*.{0,80}?(?=\s*(?:Kết cấu|Chiều dày|Cho cấu|Loại|Vật liệu|Giới hạn|$))/g,m,l="";while((m=re.exec(z)))l=m[0];return l.replace(/\s+/g," ").trim()}
 var TRX=/^(.*?)\s*((?:[–—−-]|\d{2,3})(?:\s+(?:[–—−-]|\d{2,3})){3,})\s*$/;
-function tblSolve(q,ps){var m=/(\d+(?:[.,]\d+)?)\s*mm\b/i.exec(q);if(!m)return null;var t=parseFloat(m[1].replace(",",".")),SK=" gioi han chiu lua day be mm ",nz=function(z){return" "+norm(z).trim()+" "},qs=Object.keys(bt(norm(q))).filter(function(w){return SK.indexOf(" "+w+" ")<0&&!/\d/.test(w)});if(qs.length<2)return null;
- var rows=[],seen={},src="";
- ps.forEach(function(x){var tx=String(x.text),ix=tx.search(/\(\s*1\s*\)/),cols=tblCols(ix>0?tx.slice(0,ix):tx.slice(0,500));
-  if(cols.length<4){var k=IDX.findIndex(function(c){return c.doc===x.doc&&c.p===x.page&&c.t===tx});for(var b=1;b<=3&&k-b>=0&&cols.length<4;b++){var c=IDX[k-b];if(c.id!==IDX[k].id)break;var j=c.t.search(/\(\s*1\s*\)/);cols=tblCols(j>0?c.t.slice(0,j):c.t.slice(0,700))}}
-  if(cols.length<4)return;
-  var par="",wrap=0;tx.slice(ix>0?ix:0).split("\n").forEach(function(l0){var l=l0.replace(/\s*¦\s*/g," ").replace(/\s+/g," ").trim(),mt=TRX.exec(l);
+function tblSolve(q){var m=/(\d+(?:[.,]\d+)?)\s*mm\b/i.exec(q);if(!m)return null;var nq=" "+norm(q).trim()+" ";if(nq.indexOf(" chiu lua ")<0&&nq.indexOf(" rei ")<0&&nq.indexOf(" ei ")<0)return null;
+ var t=parseFloat(m[1].replace(",",".")),SK=" gioi han chiu lua day be mm ",nz=function(z){return" "+norm(z).trim()+" "},qs=Object.keys(bt(norm(q))).filter(function(w){return SK.indexOf(" "+w+" ")<0&&!/\d/.test(w)});if(qs.length<2)return null;
+ var S={cols:[],cap:""},G={},pd="";
+ IDX.forEach(function(c){if(!/QCVN[ _-]*0?6(?!\d)/i.test(c.doc))return;if(c.doc!==pd){S={cols:[],cap:""};pd=c.doc}
+  var tx=c.t,ix=tx.search(/\(\s*1\s*\)/),cp=tblCap(ix>0?tx.slice(0,ix):tx),cl=tblCols(ix>0?tx.slice(0,ix):tx.slice(0,700));
+  if(cp){S.cap=cp;S.cols=cl}else if(ix>0&&cl.length>=4)S.cols=cl;
+  if(S.cols.length<4)return;var cols=S.cols,par="",wrap=0;
+  tx.slice(ix>0?ix:0).split("\n").forEach(function(l0){var l=l0.replace(/\s*¦\s*/g," ").replace(/\s+/g," ").trim(),mt=TRX.exec(l);
    if(!mt){if(/^\d+\.\s/.test(l)){par=l;wrap=1}else if(wrap)par+=" "+l;return}
    var lab=mt[1],vs=mt[2].split(" ");if(/^\d+\.\s/.test(lab)){par=lab;wrap=1}else wrap=0;if(vs.length<cols.length)return;vs=vs.slice(-cols.length);
-   var cx=nz(par+" "+lab),hit=qs.filter(function(w){return cx.indexOf(" "+w+" ")>=0}).length;if(hit/qs.length<.7)return;
-   var bR=0,bE=0,mR=1e9,mE=1e9,num=0;cols.forEach(function(c,k){var v=parseFloat(String(vs[k]).replace(",","."));if(isNaN(v))return;num++;if(c.r){mR=Math.min(mR,v);if(v<=t)bR=Math.max(bR,c.v)}else{mE=Math.min(mE,v);if(v<=t)bE=Math.max(bE,c.v)}});if(!num)return;
-   var key=par+"|"+lab;if(seen[key])return;seen[key]=1;if(!src)src=x.doc+", tr. "+x.page;
-   var nm=(par.replace(/[:;]\s*$/,"")+" – "+lab).replace(/\s+/g," ").slice(0,110);
-   rows.push({nm:nm,R:bR?"REI "+bR:"không đạt REI"+(mR<1e9?" (cần ≥ "+mR+" mm)":""),E:bE?"EI "+bE:"không đạt EI"+(mE<1e9?" (cần ≥ "+mE+" mm)":"")})})});
- if(!rows.length)return null;
- return{text:"dày "+t+" mm: "+rows.map(function(r){return r.nm+": chịu lực "+r.R+"; không chịu lực "+r.E}).join(" | ")+" ["+src+"]",html:'<div class="mu">Tra bảng tự động theo chiều dày '+t+' mm (chọn mức cao nhất mà chiều dày ≥ số trong ô)</div>'+rows.map(function(r){return'<div class="fa" style="margin:4px 0">'+esc(r.nm)+'<br>Chịu lực: <b>'+esc(r.R)+'</b> · Không chịu lực: <b>'+esc(r.E)+'</b></div>'}).join("")+'<div class="mu">Đọc từ chữ trong PDF ('+esc(src)+'); cần đối chiếu bảng gốc.</div>'}}
+   var cx=nz(par+" "+lab),ra=qs.filter(function(w){return cx.indexOf(" "+w+" ")>=0}).length/qs.length;if(ra<.7)return;
+   var b={r:null,e:null},mn={r:1e9,e:1e9},hasR=0,hasE=0;cols.forEach(function(c2,k){var v=parseFloat(String(vs[k]).replace(",","."));if(isNaN(v))return;var f=c2.r?"r":"e";if(c2.r)hasR=1;else hasE=1;mn[f]=Math.min(mn[f],v);if(v<=t&&(!b[f]||c2.v>b[f].v))b[f]=c2});
+   var pp=par.replace(/[:;]\s*$/,""),sub=/^\d+\.\s/.test(lab)?"":lab,nm=(sub&&pp.indexOf(sub)<0?pp:pp||lab).replace(/\s+/g," ").slice(0,100),k2=S.cap||"Bảng (không rõ tên)",g=G[k2]=G[k2]||{cap:k2,p:c.p,doc:c.doc,ra:0,rows:[]};
+   var f1=function(f,has){return has?(b[f]?b[f].n:"không đạt"+(mn[f]<1e9?" (cần ≥ "+mn[f]+" mm)":"")):null},R=f1("r",hasR),E=f1("e",hasE);
+   g.ra=Math.max(g.ra,ra);g.rows.push({nm:nm,sub:sub,R:R,E:E,ra:ra})})});
+ var gs=Object.keys(G).map(function(k){return G[k]}).sort(function(a,b){var sc=function(g){return g.ra+(nq.indexOf(" cot ")>=0?(/Cột/i.test(g.cap)?.25:0):(/Tường/i.test(g.cap)?.25:0))};return sc(b)-sc(a)}).slice(0,3);if(!gs.length)return null;
+ var line=function(g){var by={},o=[];g.rows.forEach(function(r){var k=r.nm+"|"+r.R+"|"+r.E;if(!by[k]){by[k]={r:r,subs:[]};o.push(by[k])}if(r.sub)by[k].subs.push(r.sub)});
+  return o.slice(0,3).map(function(x){var r=x.r,res=(r.R&&r.E)?"chịu lực "+r.R+"; không chịu lực "+r.E:(r.R||r.E);return r.nm+(x.subs.length?" ("+x.subs.join(" / ")+")":"")+": "+res}).join(" | ")},
+  g=gs[0],dn=function(x){return x.doc.replace(/\.pdf$/i,"")},kw=qs.join(" ");
+ var text="dày "+t+" mm – "+g.cap+" (tr. "+g.p+"): "+line(g);
+ var h='<div class="mu">Từ khóa: '+esc(kw)+' · chỉ tiêu: giới hạn chịu lửa · chiều dày: '+t+' mm · phạm vi: QCVN 06 (bảng giới hạn chịu lửa)</div><div class="fa" style="margin:6px 0">'+esc(line(g).replace(/\|/g,"<br>")).replace(/&lt;br&gt;/g,"<br>")+'</div><div class="mu">Theo '+esc(g.cap)+' – '+esc(dn(g))+', tr. '+g.p+': số trong ô là chiều dày tối thiểu (mm); chọn mức cao nhất mà '+t+' mm ≥ số trong ô.</div>';
+ if(gs.length>1)h+='<div class="mu" style="margin-top:6px"><b>Lưu ý thêm (nếu ý bạn là cấu kiện khác):</b></div>'+gs.slice(1).map(function(x){return'<div class="mu">• '+esc(x.cap)+', tr. '+x.p+': '+esc(line(x))+'</div>'}).join("");
+ return{text:text,html:h+'<div class="mu" style="margin-top:6px">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>'}}
 function tblDiag(ps){var a=ps.filter(function(x){return/¦|Tường|REI/.test(x.text)}).slice(0,2);return'<details class="acc" open><summary>Chẩn đoán tra bảng (chụp gửi nhà phát triển)</summary><div class="bd"><div class="mu">Không ghép được bảng. Chữ app đọc được từ PDF ('+ps.length+' đoạn):</div>'+(a.length?a.map(function(x){return'<div class="mu" style="word-break:break-all;margin-top:6px">'+esc(x.doc)+' tr.'+x.page+' · cột REI/EI tìm thấy: '+tblCols(String(x.text).slice(0,600)).length+'<br>'+esc(String(x.text).slice(0,650)).replace(/\n/g," ⏎ ")+'</div>'}).join(""):'<div class="mu">Không đoạn nào chứa bảng.</div>')+'</div></details>'}
 function ansPs(q){var A=[];sd(q,10).slice(0,7).forEach(function(x,k){A.push(x);if(k<3&&x.c.t.indexOf("¦")>=0){var nx=IDX[IDX.indexOf(x.c)+1];if(nx&&nx.id===x.c.id&&Math.abs(nx.p-x.c.p)<=1&&nx.t.indexOf("¦")>=0)A.push({c:nx})}});A=A.concat(defPs(q));var seen={},out=[];A.forEach(function(x){var k=x.c.doc+"|"+x.c.p+"|"+x.c.t.slice(0,40);if(!seen[k]){seen[k]=1;out.push({doc:x.c.doc,page:x.c.p,text:x.c.t})}});return out.slice(0,10)}
 function defPs(q){var qs=Object.keys(bt(norm(q))),R=[];IDX.forEach(function(c){if(!/^\s*1\.\d+(?:\.\d+)?\.?\s/.test(c.t)&&!/thuật ngữ|giải thích từ ngữ|định nghĩa/i.test(c.t.slice(0,200)))return;var h=0;qs.forEach(function(w){if(c.tk[w])h++});if(h>=1)R.push({c:c,h:h})});R.sort(function(a,b){return b.h-a.h||a.c.p-b.c.p});return R.slice(0,3)}
@@ -639,9 +648,9 @@ function ansFmt(t){var re=/(?:^|\n)[ \t]*\**[ \t]*(Kết luận|Căn cứ|Lưu �
 var ANSC={};
 function dkOf(d){var m=metaOf(d);return m.v?m.v.key:String(d).replace(/\.[A-Za-z0-9]+$/,"")}
 function ansSrc(a,ps){var u=[],re=/\[(\d+)\]/g,m;while((m=re.exec(a)))if(u.indexOf(m[1])<0&&ps[m[1]-1])u.push(m[1]);u.sort(function(x,y){return x-y});if(!u.length)return"";return'<div class="mu" style="margin-top:6px">Nguồn: '+u.map(function(n){var p=ps[n-1];return"["+n+"] "+esc(dkOf(p.doc))+(p.page?", trang "+esc(String(p.page)):"")}).join("; ")+"</div>"}
-function ansRun(q){var bx=$("ansOut");if(!bx)return;var tb=null;try{tb=tblSolve(q,ansPs(q))}catch(e){}window.__th=tb?tb.text:"";var dg=(!tb&&/\d\s*mm/i.test(q))?tblDiag(ansPs(q)):"";var h=ruleAnsHtml(q)||exAnsHtml(sd(q),q,1)||'<div class="mu">Chưa có điều khoản khớp. Xem đoạn trích ở mục 3.</div>';
+function ansRun(q){var bx=$("ansOut");if(!bx)return;var tb=null;try{tb=tblSolve(q)}catch(e){}window.__th=tb?tb.text:"";var dg=(!tb&&/\d\s*mm/i.test(q))?tblDiag(ansPs(q)):"";var h=ruleAnsHtml(q)||exAnsHtml(sd(q),q,1)||'<div class="mu">Chưa có điều khoản khớp. Xem đoạn trích ở mục 3.</div>';
  bx.innerHTML=(tb?'<div id="ansTb">'+tb.html+'</div>':dg)+'<div id="ansAi"></div><details class="acc" id="ansRule"><summary>Bản trích tự động từ văn bản (chưa chắt lọc)</summary><div class="bd"><div class="w l2" style="margin-bottom:8px">Bản này ghép số theo từ khóa nên có thể lẫn số của đối tượng khác (ví dụ chiều cao gian phòng với chiều cao đường thoát nạn). Hãy đối chiếu điều khoản gốc.</div>'+h+'</div></details><div style="margin-top:8px"><button class="chip" data-a="ai1">Tổng hợp lại bằng AI</button></div>';
- ansAI(null)}
+ if(!tb)ansAI(null)}
 var RT=function(e){return e&&(e.name==="AbortError"||[408,429,500,502,503,504,524,529].indexOf(e.st)>=0||/\b5\d\d\b/.test(e.m||""))};
 function ansRace(w,q,all,PL){PL=PL||[{d:0,n:8,len:1600},{d:15000,n:4,len:1300},{d:35000,n:3,len:1000}];
  return new Promise(function(res,rej){var st=[],tm=[],done=false,fails=0;
