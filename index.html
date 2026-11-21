@@ -28,7 +28,7 @@ ul{margin:2px 0;padding-left:18px}li{margin:3px 0}.bs{margin:4px 0;font-size:14p
 .st{display:inline-block;font-size:12px;border-radius:4px;padding:0 7px;margin-left:4px}.st.ok{background:var(--okb);color:var(--ok)}.st.wn{background:var(--wnb);color:var(--wn)}.st.er{background:var(--erb);color:var(--er)}
 .w{padding:8px 10px;border-radius:6px;margin:6px 0;font-size:13.5px}.w.l3{background:var(--erb);color:var(--er)}.w.l2{background:var(--wnb);color:var(--wn)}.w.l1{background:var(--ac2);color:var(--ac)}
 .wb{margin-top:10px;padding:10px 12px;border-radius:6px;background:var(--wnb);color:var(--wn);font-size:13.5px}.wb div{margin-top:4px}
-.tip{background:var(--ac2);border-radius:6px;padding:8px 10px;font-size:14px}.mu{color:var(--mu);font-size:13px}.ctx{font-size:12.5px;color:var(--mu);margin-top:10px}
+.tip{background:var(--ac2);border-radius:6px;padding:8px 10px;font-size:14px}.mu{color:var(--mu);font-size:13px}.ptw{overflow-x:auto;max-width:100%;margin:6px 0}.pt{border-collapse:collapse;font-size:12px}.pt td{border:1px solid var(--ln);padding:2px 6px;vertical-align:top}.ctx{font-size:12.5px;color:var(--mu);margin-top:10px}
 .rel{display:grid;gap:6px}.rel button{text-align:left;padding:10px 12px;border:1px solid var(--ln);border-radius:6px;background:var(--sf);color:var(--ink);font:inherit;font-size:14px;cursor:pointer}.rel button span{display:block;color:var(--mu);font-size:12.5px}
 .lnk{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:inherit;font-size:14px;padding:6px 0;border-top:1px solid var(--ln);cursor:pointer}.gp{margin:6px 0}
 details.acc{background:var(--sf);border:1px solid var(--ln);border-radius:6px;margin-top:8px}details.acc summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;justify-content:space-between;gap:10px;font-weight:600}
@@ -544,7 +544,7 @@ function listDocsHtml(arr){arr=arr||UD;
 var QTY=/(?:(không(?:\s+được)?\s+(?:nhỏ|ít|thấp)\s+hơn|không(?:\s+được)?\s+(?:lớn\s+hơn|quá|vượt\s+quá)|tối\s+thiểu|tối\s+đa|lớn\s+hơn|nhỏ\s+hơn)\s+)?\d+(?:[.,]\d+)?\s*(?:mm|cm|m2|m²|m|%|lối|người|tầng|độ|giờ|phút|lần|bậc|xe|chỗ|kg|kN)(?![\p{L}\d])/giu;
 function qsym(s){s=String(s).replace(/\s+/g," ").trim();
  return s.replace(/^(không(?: được)? (?:nhỏ|ít|thấp) hơn|tối thiểu) /i,"≥ ").replace(/^(không(?: được)? (?:lớn hơn|quá|vượt quá)|tối đa) /i,"≤ ").replace(/^lớn hơn /i,"> ").replace(/^nhỏ hơn /i,"< ")}
-function segs(t){var s=String(t).replace(/\s*\n\s*/g," "),re=/(?:^|\s)((?:[A-ZĐ]\.)?\d+(?:\.\d+){1,5}\.?|Bảng\s+[A-Z]?\.?\d+(?:\.\d+)?)\.?(?=\s+[A-ZĐÀ-Ỹ])/g,ix=[],m;
+function segs(t){var s=String(t).replace(/\s*\n\s*/g," ").replace(/(?:\s*¦)+\s*/g," | "),re=/(?:^|\s)((?:[A-ZĐ]\.)?\d+(?:\.\d+){1,5}\.?|Bảng\s+[A-Z]?\.?\d+(?:\.\d+)?)\.?(?=\s+[A-ZĐÀ-Ỹ])/g,ix=[],m;
  while((m=re.exec(s)))ix.push({i:m.index+(m[0].length-m[1].length),k:m[1].replace(/\.$/,"")});
  if(!ix.length)return[{k:"",x:s}];
  var o=ix.map(function(a,j){return{k:a.k,x:s.slice(a.i,j+1<ix.length?ix[j+1].i:s.length).trim()}});
@@ -812,15 +812,48 @@ function sd(q,N){var n=norm(q),qs=Object.keys(bt(n)),lq=q.toLowerCase(),dm=/\b(q
 function hl(t,q){var e=esc(t),ws=uniq(q.toLowerCase().split(/[^\p{L}\d]+/u).filter(function(w){return w.length>1&&SW.indexOf(norm(w))<0}));
  if(ws.length)e=e.replace(new RegExp("("+ws.map(function(w){return w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}).join("|")+")","giu"),"<mark>$1</mark>");return e.replace(/\n/g,"<br>")}
 function win(c,qs){var L=c.t.split("\n");if(L.length<5)return{w:c.t,all:0};var b=-1,bs=0;L.forEach(function(l,i){var tk=bt(norm(l)),s=0;qs.forEach(function(w){if(tk[w])s++});if(s>bs){bs=s;b=i}});if(b<0)return{w:c.t,all:0};var a=Math.max(0,b-1),e=Math.min(L.length,b+3);return{w:(a>0?L[0]+"\n…\n":"")+L.slice(a,e).join("\n"),all:1}}
-function psH(ps,q){if(!ps.length)return"";var qs=Object.keys(bt(norm(q)));return'<div class="h">Trả lời từ văn bản'+(ps.part?' (khớp một phần, hãy kiểm tra kỹ)':'')+'</div>'+ps.map(function(x,i){var c=x.c,w=win(c,qs);return'<div class="card'+(i?'':' main')+'"><div class="mu">📄 '+esc(c.doc)+(c.kind==="pdf"?' · trang '+c.p:'')+'</div><div class="ps">'+hl(w.w,q)+'</div>'+(w.all?'<details><summary class="mu" style="cursor:pointer;margin-top:6px">Xem cả đoạn</summary><div class="ps">'+hl(c.t,q)+'</div></details>':'')+'</div>'}).join("")+'<div class="mu">Nguyên văn đọc từ file; bảng có thể lệch cột, hãy mở file gốc để đối chiếu.</div>'}
+function tblH(t,q){var Ls=String(t).split("\n"),o="",tb=[],fl=function(){if(!tb.length)return;var n=0;tb.forEach(function(r){if(r.length>n)n=r.length});o+='<div class="ptw"><table class="pt">'+tb.map(function(r){var h="";for(var i=0;i<n;i++)h+="<td>"+(r[i]?hl(r[i].trim(),q):"")+"</td>";return"<tr>"+h+"</tr>"}).join("")+"</table></div>";tb=[]};
+ Ls.forEach(function(l){if(l.indexOf("¦")>=0)tb.push(l.split("¦"));else{fl();o+=hl(l,q)+"<br>"}});fl();return o}
+function psH(ps,q){if(!ps.length)return"";var qs=Object.keys(bt(norm(q)));return'<div class="h">Trả lời từ văn bản'+(ps.part?' (khớp một phần, hãy kiểm tra kỹ)':'')+'</div>'+ps.map(function(x,i){var c=x.c,w=win(c,qs);return'<div class="card'+(i?'':' main')+'"><div class="mu">📄 '+esc(c.doc)+(c.kind==="pdf"?' · trang '+c.p:'')+'</div><div class="ps">'+tblH(w.w,q)+'</div>'+(w.all?'<details><summary class="mu" style="cursor:pointer;margin-top:6px">Xem cả đoạn</summary><div class="ps">'+tblH(c.t,q)+'</div></details>':'')+'</div>'}).join("")+'<div class="mu">Nguyên văn đọc từ file; bảng có thể lệch cột, hãy mở file gốc để đối chiếu.</div>'}
 function u8(b){var s=atob(b),a=new Uint8Array(s.length);for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a}
 var RSPOLY="(function(){var P=self.ReadableStream&&ReadableStream.prototype;if(P&&!P[Symbol.asyncIterator]){P[Symbol.asyncIterator]=function(){var r=this.getReader();return{next:function(){return r.read()},return:function(){r.releaseLock();return Promise.resolve({done:true,value:undefined})},[Symbol.asyncIterator]:function(){return this}}}}})();\n";
 eval(RSPOLY);
 function pdfjs(){return PJ||(PJ=(async function(){var m=await import(URL.createObjectURL(new Blob([u8(window.__PDFJS)],{type:"text/javascript"})));m.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([RSPOLY,u8(window.__PDFW)],{type:"text/javascript"}));return m})())}
 function chunk(s,p,ch){var ls=s.split("\n").map(function(x){return x.replace(/\s+/g," ").trim()}).filter(Boolean),cur="";
  ls.forEach(function(l){var hd=/^(\d+(\.\d+)+\.?|[A-ZĐ]\.\d+(\.\d+)*|Điều \d+|Bảng [A-Z0-9.]+|Phụ lục [A-Z])/.test(l);if(cur&&(cur.length+l.length>900||(hd&&cur.length>250))){ch.push({p:p,t:cur});cur=""}cur+=(cur?"\n":"")+l});if(cur.trim())ch.push({p:p,t:cur})}
+function pdfJn(tc){
+ var it=[];
+ tc.items.forEach(function(t){if(typeof t.str!=="string"||!t.str.trim())return;var tr=t.transform||[1,0,0,1,0,0],h=Math.abs(tr[3])||Math.abs(tr[0])||10;it.push({s:t.str.replace(/\s+/g," ").trim(),x:tr[4],y:tr[5],w:t.width||0,h:h})});
+ it.sort(function(a,b){return b.y-a.y});
+ var LN=[];
+ it.forEach(function(t){var l=LN[LN.length-1];if(l&&Math.abs(l.y-t.y)<=Math.max(l.h,t.h)*.5)l.it.push(t);else LN.push({y:t.y,h:t.h,it:[t]})});
+ LN.forEach(function(l){l.it.sort(function(a,b){return a.x-b.x});var cs=[],c=null;l.it.forEach(function(t){var gp=c?t.x-c.x1:0;if(c&&gp<=Math.max(l.h*.8,6)){c.s+=(gp>l.h*.12?" ":"")+t.s;c.x1=t.x+t.w}else{c={s:t.s,x0:t.x,x1:t.x+t.w};cs.push(c)}});l.cs=cs});
+ var jt=function(l){return l.cs.map(function(c){return c.s}).join(" ")},o=[],i=0;
+ while(i<LN.length){
+  if(LN[i].cs.length<2){o.push(jt(LN[i]));i++;continue}
+  var last=i,k=i+1;while(k<LN.length&&k<=last+12&&LN[k-1].y-LN[k].y<=LN[k].h*2.4){if(LN[k].cs.length>=2)last=k;k++}
+  var B=LN.slice(i,last+1),nt=B.filter(function(l){return l.cs.length>=2}).length,cols=nt>=2?tcols(B):[];
+  if(cols.length<3){o.push(jt(LN[i]));i++;continue}
+  var tw=cols[cols.length-1][1]-cols[0][0],R=[],pend=null,fl=function(){if(pend!==null){var r=cols.map(function(){return""});r[0]=pend;R.push(r);pend=null}};
+  B.forEach(function(l){var r=cols.map(function(){return""}),ix=[];
+   l.cs.forEach(function(c){var xc=(c.x0+c.x1)/2,j=0,bd=1e9;cols.forEach(function(q,n){var d=xc>=q[0]&&xc<=q[1]?0:Math.min(Math.abs(xc-q[0]),Math.abs(xc-q[1]));if(d<bd){bd=d;j=n}});ix.push(j);r[j]=(r[j]?r[j]+" ":"")+c.s});
+   var data=r.slice(1).some(Boolean),wide=l.cs.length===1&&(l.cs[0].x1-l.cs[0].x0>tw*.5||ix[0]>0);
+   if(wide||(!data&&l.cs.length>1)){fl();R.push(jt(l));return}
+   if(data){if(pend!==null){r[0]=(pend+" "+r[0]).trim();pend=null}R.push(r);return}
+   var t=r[0],cont=/^(?:\p{Ll}|\d)/u.test(t)&&!/^(\d+\.|[a-zđ]\))\s/.test(t);
+   if(cont){if(pend!==null)pend+=" "+t;else if(R.length&&Array.isArray(R[R.length-1]))R[R.length-1][0]=(R[R.length-1][0]+" "+t).trim();else pend=t}
+   else{fl();pend=t}});
+  fl();R.forEach(function(r){o.push(Array.isArray(r)?r.join("¦"):r)});
+  i=last+1}
+ return o.join("\n")}
+function tcols(B){var mn=1e9,mx=-1e9;B.forEach(function(l){l.cs.forEach(function(c){if(c.x0<mn)mn=c.x0;if(c.x1>mx)mx=c.x1})});
+ var n=Math.ceil(mx-mn)+2,cv=new Array(n).fill(0),h=B[0].h;
+ B.forEach(function(l){var m={};l.cs.forEach(function(c){for(var x=Math.max(0,Math.floor(c.x0-mn));x<=Math.min(n-1,Math.ceil(c.x1-mn));x++)m[x]=1});Object.keys(m).forEach(function(x){cv[x]++})});
+ var th=Math.max(1,Math.floor(B.length*.15)),gp=Math.max(3,h*.5),cols=[],st=null,e=0;
+ for(var x=0;x<n;x++){if(cv[x]>th){if(st===null)st=x;e=x}else if(st!==null&&x-e>=gp){cols.push([st+mn,e+mn]);st=null}}
+ if(st!==null)cols.push([st+mn,e+mn]);return cols}
 async function readPdf(f,st){var m=await pdfjs(),d=await m.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise,ch=[],tx=0,bad=0,alln=0,emp=0;
- function jn(tc){var o="",px=null,py=0,pw=0;tc.items.forEach(function(it){if(typeof it.str!=="string")return;var tr=it.transform||[1,0,0,1,0,0],x=tr[4],y=tr[5],h=Math.abs(tr[3])||Math.abs(tr[0])||10;if(px!==null&&o){if(Math.abs(y-py)>h*.5){if(!/\n$/.test(o))o+="\n"}else if(x-(px+pw)>h*.12&&!/\s$/.test(o)&&!/^\s/.test(it.str))o+=" "}o+=it.str;if(it.hasEOL&&!/\n$/.test(o))o+="\n";px=x;py=y;pw=it.width||0});return o}
+ function jn(tc){return pdfJn(tc)}
  for(var p=1;p<=d.numPages;p++){st(f.name+": trang "+p+"/"+d.numPages);var pg=await d.getPage(p),s=jn(await pg.getTextContent());
   if(!s.trim()){try{s=jn(await pg.getTextContent({includeMarkedContent:false,disableNormalization:true}))}catch(e){}}
   var t=s.replace(/\s+/g,"");if(!t)emp++;tx+=s.trim().length;alln+=t.length;bad+=(t.match(/[\u0000-\u001f\ue000-\uf8ff\ufffd]/g)||[]).length;chunk(s,p,ch)}
@@ -829,7 +862,7 @@ function why(r){if(!r.chunks.length&&!r.pages)return r.sheets?"bảng tính khô
  if(r.alln&&r.bad/r.alln>0.2)return"chữ đọc ra bị lỗi font ("+Math.round(100*r.bad/r.alln)+"% ký tự lạ, thường do font VNI/TCVN3 cũ)";
  if(r.pages>1&&r.emp>r.pages*0.5)return"chỉ "+(r.pages-r.emp)+"/"+r.pages+" trang có chữ, phần còn lại là ảnh scan";return""}
 function badR(r){return!r.chunks.length||(r.alln&&r.bad/r.alln>0.2)}
-var FC={};try{FC=JSON.parse(localStorage.getItem("archicode.fc")||"{}")}catch(e){}
+var PV=2;var FC={};try{FC=JSON.parse(localStorage.getItem("archicode.fc")||"{}")}catch(e){}
 function saveFC(){try{localStorage.setItem("archicode.fc",JSON.stringify(FC))}catch(e){}}
 async function readDocx(f){var b=await f.arrayBuffer(),v=new DataView(b),u=new Uint8Array(b),i=u.length-22;while(i>=0&&v.getUint32(i,true)!==0x06054b50)i--;var n=v.getUint16(i+10,true),o=v.getUint32(i+16,true),xml=null;
  for(var k=0;k<n;k++){var mt=v.getUint16(o+10,true),cs=v.getUint32(o+20,true),nl=v.getUint16(o+28,true),el=v.getUint16(o+30,true),cl=v.getUint16(o+32,true),lo=v.getUint32(o+42,true),nm=new TextDecoder().decode(u.subarray(o+46,o+46+nl));
@@ -912,7 +945,7 @@ function chk(f,ext,r){var I=[],ad=function(l,t,x){I.push({l:l,t:t,f:x})},n=f.nam
  if(/\(\d\)|copy|bản sao/i.test(n))ad("wn","Tên file có dấu hiệu là bản sao (1), copy: dễ up nhầm bản cũ","Đặt tên theo số hiệu + năm ban hành, bỏ chữ copy/(1)");
  var du=UD.filter(function(d){return d.name===n})[0];if(du)ad("in","Đã có file cùng tên ("+(du.shared?"dùng chung":"riêng")+"): sẽ thay bằng bản này","Nếu là văn bản khác thì đổi tên trước khi up");
  var o={er:0,wn:1,in:2};I.sort(function(a,b){return o[a.l]-o[b.l]});return I}
-function pvT(c){var t=c.t.length>600?c.t.slice(0,600)+"…":c.t;return esc(t).replace(/\n/g,"<br>")}
+function pvT(c){var t=c.t.length>600?c.t.slice(0,600)+"…":c.t;return esc(t.replace(/(?:\s*¦)+\s*/g," | ")).replace(/\n/g,"<br>")}
 function prevH(r){var c=r&&r.chunks;if(!c||!c.length)return"";var ix=[0];if(c.length>2)ix.push(Math.floor(c.length/2));if(c.length>1)ix.push(c.length-1);return'<details><summary class="mu" style="cursor:pointer;margin-top:6px">Xem trước nội dung đọc được (đầu, giữa, cuối)</summary>'+ix.map(function(i){var x=c[i];return'<div class="ps" style="margin-top:6px"><div class="mu">Đoạn '+(i+1)+"/"+c.length+(x.p?" · trang/sheet "+x.p:"")+"</div>"+pvT(x)+"</div>"}).join("")+'<div class="mu" style="margin-top:6px">Đối chiếu với file gốc: chữ có đúng dấu, số liệu và bảng có nguyên vẹn không.</div></details>'}
 function setStt(){var e=$("fst");if(e)e.textContent=window._stt||""}
 async function stage(fl,dest){for(var i=0;i<fl.length;i++){var f=fl[i],ext=((/\.([a-z0-9]+)$/i.exec(f.name)||[])[1]||"").toLowerCase(),it={f:f,ext:ext,dest:dest,id:Date.now()+"-"+i,I:[],r:null};
@@ -957,11 +990,11 @@ async function syncShared(){var st=function(t){window._sst=t;if($("sst"))$("sst"
  if(!names){st('Không lấy được danh sách file trong thư mục docs (GitHub API có thể đang giới hạn lượt gọi, hoặc sai tên repo). Cách khắc phục: thêm file docs/danh-sach.json chứa danh sách tên file, ví dụ ["QCVN_06-2022_BXD___sd_2023.pdf"].');if(ST.tab==="vb"&&!ST.f.t)vVb();return}
  var ch=0;FAILS=[];
  for(var i=0;i<names.length;i++){var n=names[i].n,u="docs/"+encodeURIComponent(n),k=names[i].k||await hk(u),ex=UD.filter(function(d){return d.shared&&d.name===n})[0];
-  if(ex&&ex.sha===k)continue;
+  if(ex&&ex.sha===k&&ex.pv===PV)continue;
   if(/\.xls$/i.test(n)){FAILS.push([n,"file .xls cũ chưa đọc được: mở bằng Excel, Lưu thành .xlsx rồi up lại"]);continue}if(/\.doc$/i.test(n)){FAILS.push([n,"file .doc cũ chưa đọc được: mở bằng Word, Lưu thành .docx rồi up lại"]);continue}
   if(FC[n]&&FC[n].k===k){FAILS.push([n,FC[n].w+" (đã thử, bấm Thử đọc lại để kiểm tra lại)"]);continue}
   try{st("Đang nạp văn bản dùng chung "+(i+1)+"/"+names.length+": "+n);var rs=await fetch(u);if(!rs.ok&&m&&rp)rs=await fetch("https://api.github.com/repos/"+m[1]+"/"+rp+"/contents/docs/"+encodeURIComponent(n),{headers:{Accept:"application/vnd.github.raw"}});if(!rs.ok)throw 0;var bl=await rs.blob(),ext=(/\.([a-z0-9]+)$/i.exec(n)||[])[1].toLowerCase(),kd=ext==="pdf"?"pdf":ext==="docx"?"docx":ext==="xlsx"?"xlsx":"txt",r=await readAny(new File([bl],n),ext,st);
-   var w=why(r);if(badR(r)){FAILS.push([n,w]);FC[n]={k:k,w:w};saveFC();continue}delete FC[n];saveFC();if(w)FAILS.push([n,"⚠ đã nạp nhưng "+w]);var rec={id:"shared:"+n,name:n,kind:kd,size:bl.size,pages:r.pages,chunks:r.chunks,shared:1,sha:k};
+   var w=why(r);if(badR(r)){FAILS.push([n,w]);FC[n]={k:k,w:w};saveFC();continue}delete FC[n];saveFC();if(w)FAILS.push([n,"⚠ đã nạp nhưng "+w]);var rec={id:"shared:"+n,name:n,kind:kd,size:bl.size,pages:r.pages,chunks:r.chunks,shared:1,sha:k,pv:PV};
    await dbOp("put",rec).catch(function(){});UD=UD.filter(function(d){return d.id!==rec.id}).concat(rec);ch=1;build();srcBar()}catch(e){FAILS.push([n,"không tải/đọc được: "+((e&&e.message)||"lỗi mạng hoặc file hỏng")])}}
  var keep=names.map(function(x){return x.n});
  for(var j=0;j<UD.length;j++){var d=UD[j];if(d.shared&&keep.indexOf(d.name)<0){await dbOp("delete",d.id).catch(function(){});ch=1}}
