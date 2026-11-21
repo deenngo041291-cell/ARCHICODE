@@ -558,7 +558,7 @@ function exAnsHtml(ps,q,inner){var R=exAns(ps,q);if(!R.length)return null;
  var TM={"QĐ địa phương":"QDDP","Nghị định":"NĐ"},first=null;
  var h=R.map(function(r,i){var m=metaOf(r.c.doc),v=m.v,dk=v?v.key:String(r.c.doc).replace(/\.[A-Za-z0-9]+$/,""),st=v?dstat(v,ST.as):null,qv=uniq(r.qt.map(qsym)),sent=r.g.x,cut=sent.length>240?sent.slice(0,240).replace(/\s+\S*$/,"")+"…":sent;
   if(!first&&v)first=v;
-  return'<div'+(i?' style="margin-top:10px;padding-top:8px;border-top:1px solid var(--ln)"':'')+'>'+(qv.length?'<div class="h2">'+esc(qv.join("; "))+'</div>':'')+'<div>'+hl(cut,q)+'</div><div class="mu">Theo '+(r.g.k?(/^Bảng/i.test(r.g.k)?esc(r.g.k):'điều '+esc(r.g.k))+' của ':'')+esc(dk)+(r.c.kind==="pdf"?', trang '+r.c.p:'')+' '+(st?chip(st):'')+'</div></div>'}).join("");
+  return'<div'+(i?' style="margin-top:10px;padding-top:8px;border-top:1px solid var(--ln)"':'')+'>'+(qv.length?'<div class="h2">'+esc(qv.join("; "))+'</div>':'')+'<div>'+(sent.length>240?'<span class="sh">'+hl(cut,q)+'</span><span class="fl" hidden>'+hl(sent.slice(0,4000),q).replace(/\n/g,"<br>")+'</span> <button class="chip" style="padding:2px 9px;font-size:12px" data-a="more">Xem đầy đủ</button>':hl(cut,q))+'</div><div class="mu">Theo '+(r.g.k?(/^Bảng/i.test(r.g.k)?esc(r.g.k):'điều '+esc(r.g.k))+' của ':'')+esc(dk)+(r.c.kind==="pdf"?', trang '+r.c.p:'')+' '+(st?chip(st):'')+'</div></div>'}).join("");
  var ob=first?obl({type:TM[first.type]||first.type,from:first.from},ST.as):"",
  t='<div class="mu" style="margin-bottom:4px">✔ Nguồn: văn bản đã up, trích tự động nguyên văn từ file</div>'+(ps.part?'<div class="w l2">Khớp một phần với câu hỏi, hãy kiểm tra kỹ.</div>':'')+h+'<div class="mu" style="margin-top:8px">Lưu ý thêm: '+(ob?esc(ob)+' ':'')+'Bảng có thể lệch cột khi đọc từ PDF; con số nằm ở điều khác hoặc phụ lục thì xem mục 3.</div><div class="mu">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>';
  return inner?t:'<div class="card main">'+t+'</div>'}
@@ -576,6 +576,7 @@ function pairsOf(x){var re=new RegExp(QTY.source,QTY.flags),dm=/(chiều cao th�
 function ansPs(q){var A=sd(q,10).slice(0,7).concat(defPs(q)),seen={},out=[];A.forEach(function(x){var k=x.c.doc+"|"+x.c.p+"|"+x.c.t.slice(0,40);if(!seen[k]){seen[k]=1;out.push({doc:x.c.doc,page:x.c.p,text:x.c.t})}});return out.slice(0,10)}
 function defPs(q){var qs=Object.keys(bt(norm(q))),R=[];IDX.forEach(function(c){if(!/^\s*1\.\d+(?:\.\d+)?\.?\s/.test(c.t)&&!/thuật ngữ|giải thích từ ngữ|định nghĩa/i.test(c.t.slice(0,200)))return;var h=0;qs.forEach(function(w){if(c.tk[w])h++});if(h>=1)R.push({c:c,h:h})});R.sort(function(a,b){return b.h-a.h||a.c.p-b.c.p});return R.slice(0,3)}
 function cap1(t){return t?t.charAt(0).toUpperCase()+t.slice(1):t}
+function moreT(t,n){var raw=String(t),t1=raw.replace(/\s+/g," ").trim();if(t1.length<=n)return esc(t1);return'<span class="sh">'+esc(shortT(t1,n))+'</span><span class="fl" hidden>'+esc(raw.trim().slice(0,3000)).replace(/\n/g,"<br>")+'</span> <button class="chip" style="padding:2px 9px;font-size:12px" data-a="more">Xem đầy đủ</button>'}
 function shortT(t,n){t=String(t).replace(/\s+/g," ").trim();return t.length>n?t.slice(0,n).replace(/\s+\S*$/,"")+"…":t}
 function clsOf(g){var re=/\s*(?:;\s*)?[–\-•]\s*(?=Đối với)/g,p=g.x.split(re);if(p.length<3)return[g];var pre=p[0].replace(/[:;]\s*$/,""),o=[];for(var i=1;i<p.length;i++)o.push({k:g.k,x:(pre+": "+p[i]).trim()});return o}
 function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),S=[];if(!qd.length&&!qo&&!/\b(bao nhieu|toi thieu|toi da|khoang cach|dien tich|do day|do doc|kich thuoc|so luong|thong thuy|chieu|cao|rong|dai|sau|day|bac|do dai)\b/.test(norm(q)))return"";var need=qs.length<=2?1:Math.ceil(qs.length/2);
@@ -589,23 +590,36 @@ function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),
  var l1=ord.map(function(n){var v=M[n];return n+" "+v.join(" / ")+(v.length>1?" (tùy điều kiện)":"")}).join("; "),
  on=pri[0].o||qo,
  dk=function(d){var m=metaOf(d);return m.v?m.v.key:String(d).replace(/\.[A-Za-z0-9]+$/,"")},
- l2="Theo "+src.map(function(s){return(s.k?(/^Bảng/i.test(s.k)?esc(s.k):'điều '+esc(s.k)):'đoạn')+' của '+esc(dk(s.doc))+', trang '+s.p}).join("; ")+": "+esc(shortT(src[0].x.replace(/^(?:[A-Z]\.)?\d+(?:\.\d+)*\.?\s+/,""),150)),
+ l2="Theo "+src.map(function(s){return(s.k?(/^Bảng/i.test(s.k)?esc(s.k):'điều '+esc(s.k)):'đoạn')+' của '+esc(dk(s.doc))+', trang '+s.p}).join("; ")+": "+moreT(src[0].x.replace(/^(?:[A-Z]\.)?\d+(?:\.\d+)*\.?\s+/,""),150),
  rel=val.filter(function(s){return qo&&s.o&&s.o!==qo&&pri.indexOf(s)<0}).slice(0,2),
  defs=S.filter(function(s){return s.def&&s.o&&(s.o===on||rel.some(function(r){return r.o===s.o}))}).sort(cmp).slice(0,2),nt=[];
- defs.forEach(function(d){nt.push('Định nghĩa (điều '+esc(d.k)+', trang '+d.p+'): '+esc(shortT(d.x.replace(/^\S+\s+/,""),170)))});
+ defs.forEach(function(d){nt.push('Định nghĩa (điều '+esc(d.k)+', trang '+d.p+'): '+moreT(d.x.replace(/^\S+\s+/,""),170))});
  rel.forEach(function(r){nt.push('Với <b>'+esc(r.o)+'</b> ('+(r.k?'điều '+esc(r.k)+', ':'')+'trang '+r.p+'): '+esc(r.pr.ord.map(function(n){return n+" "+r.pr.P[n].join(" / ")}).join("; ")))});
  if(ord.some(function(n){return M[n].length>1}))nt.push('Có nhiều giá trị theo nhóm nhà, số người hoặc điều kiện: xem nguyên văn ở mục 3.');
  var mt=metaOf(pri[0].doc).v,st=mt?dstat(mt,ST.as):null;
  return'<div class="mu" style="margin-bottom:4px">✔ Tổng hợp tức thì từ văn bản đã up (theo quy tắc, không dùng AI)</div><div class="fa">'+esc(cap1(on||"Kết quả"))+': '+esc(l1)+'</div><div class="mu">Căn cứ: '+l2+(st?' '+chip(st):'')+'</div>'+(nt.length?'<div class="mu" style="margin-top:6px"><b>Lưu ý thêm:</b></div>'+nt.slice(0,3).map(function(t){return'<div class="mu">• '+t+'</div>'}).join(""):'')+'<div class="mu" style="margin-top:6px">Ghép chiều–giá trị theo cách hiểu của tôi từ nguyên văn file; bảng PDF có thể lệch cột.</div><div class="mu">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>'}
-function ansPrompt(q){return"Chỉ dựa vào các đoạn trích kèm theo, trả lời ngắn (tối đa 100 từ) bằng tiếng Việt, 3 dòng: (1) đáp án có số + đơn vị + đối tượng, tách từng chiều nếu có; (2) \"Theo điều/bảng … của QCVN …, trang …\"; (3) \"Lưu ý thêm:\" thuật ngữ gần nghĩa có giá trị khác. Không bịa; không có thì ghi \"Không tìm thấy trong bộ tài liệu hiện có\". Câu hỏi: "+q}
+function ansPrompt(q){return"Tổng hợp đáp án NGẮN GỌN (tối đa 170 từ) chỉ từ các đoạn trích [n], đúng thứ tự: **Kết luận:** số liệu + đơn vị + đối tượng áp dụng; nếu có nhiều giá trị theo thuật ngữ hoặc nhóm nhà thì tách từng dòng. **Căn cứ:** văn bản, điều/mục/bảng, trang, kèm [n]. **Lưu ý:** thuật ngữ gần nghĩa có giá trị khác, điều kiện, ngoại lệ, hiệu lực. **Tư vấn:** 1-2 gợi ý thiết kế (ghi rõ là gợi ý, không phải quy định). Không hỏi lại, không chép nguyên văn dài, không bịa; thiếu căn cứ thì ghi \"Không tìm thấy trong bộ tài liệu hiện có\". Câu hỏi: "+q}
+var ANSC={};
+function dkOf(d){var m=metaOf(d);return m.v?m.v.key:String(d).replace(/\.[A-Za-z0-9]+$/,"")}
+function ansSrc(a,ps){var u=[],re=/\[(\d+)\]/g,m;while((m=re.exec(a)))if(u.indexOf(m[1])<0&&ps[m[1]-1])u.push(m[1]);u.sort(function(x,y){return x-y});if(!u.length)return"";return'<div class="mu" style="margin-top:6px">Nguồn: '+u.map(function(n){var p=ps[n-1];return"["+n+"] "+esc(dkOf(p.doc))+(p.page?", trang "+esc(String(p.page)):"")}).join("; ")+"</div>"}
 function ansRun(q){var bx=$("ansOut");if(!bx)return;var h=ruleAnsHtml(q)||exAnsHtml(sd(q),q,1)||'<div class="mu">Chưa có điều khoản khớp. Xem đoạn trích ở mục 3.</div>';
- bx.innerHTML=h+'<div style="margin-top:8px"><button class="chip" data-a="ai1">Nhờ AI diễn giải lại (chậm hơn, cần Worker)</button></div><div id="ansAi" style="margin-top:6px"></div>'}
-async function ansAI(b){var bx=$("ansAi"),w=WK();if(!bx)return;if(!w){bx.textContent="Chưa cài Worker AI (tab Upload, mục Trợ lý AI).";return}
- if(b)b.disabled=true;bx.innerHTML='<div class="mu">AI đang diễn giải (tối đa 40 giây)…</div>';
- var ps=ansPs(LQ).slice(0,5).map(function(x){return{doc:x.doc,page:x.page,text:x.text.slice(0,600)}});
- try{var j=await aiCall(w,{question:ansPrompt(LQ),passages:ps,history:[],project:null,asOf:ST.as},40000);bx.innerHTML=md(j.answer)+vfy(j.answer,ps)}
- catch(e){bx.innerHTML='<div class="mu">AI chưa phản hồi kịp ('+esc(e.name==="AbortError"?"quá 40 giây":(e.message||"lỗi"))+'). Dùng bản tổng hợp ở trên.</div>'}
- if(b)b.disabled=false}
+ bx.innerHTML='<div id="ansAi"></div><details class="acc" id="ansRule" open><summary>Căn cứ trích tự động từ văn bản</summary><div class="bd">'+h+'</div></details><div style="margin-top:8px"><button class="chip" data-a="ai1">Tổng hợp lại bằng AI</button></div>';
+ ansAI(null)}
+async function ansAI(b){var bx=$("ansAi"),w=WK(),q=LQ,rd=$("ansRule");if(!bx)return;
+ if(!w){bx.innerHTML='<div class="mu">Chưa cài Worker AI (tab Upload, mục Trợ lý AI), đang hiện bản trích tự động bên dưới.</div>';return}
+ var all=ansPs(q);if(!all.length)return;
+ var key=q+"|"+ST.as;if(!b&&ANSC[key]){bx.innerHTML=ANSC[key];if(rd)rd.open=false;return}
+ if(b)b.disabled=true;if(rd)rd.open=true;
+ var tries=[{n:8,len:1400},{n:4,len:800}],last=null;
+ for(var i=0;i<tries.length;i++){var T=tries[i];bx.innerHTML='<div class="mu">'+(i?"Lần 1 quá hạn, thử lại với ít đoạn trích hơn…":"🤖 AI đang tổng hợp đáp án từ văn bản đã up (tối đa 40 giây)…")+"</div>";
+  var ps=all.slice(0,T.n).map(function(x){return{doc:x.doc,page:x.page,text:x.text.slice(0,T.len)}});
+  try{var j=await aiCall(w,{question:ansPrompt(q),passages:ps,history:[],project:null,asOf:ST.as},40000);
+   if($("ansAi")!==bx||LQ!==q){if(b)b.disabled=false;return}
+   var html='<div class="mu" style="margin-bottom:4px">🤖 Tổng hợp bằng AI từ văn bản đã up (căn cứ trích nguyên văn ở mục bên dưới)</div><div style="line-height:1.55">'+md(j.answer)+"</div>"+ansSrc(j.answer,ps)+vfy(j.answer,ps)+'<div class="mu" style="margin-top:6px">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>';
+   ANSC[key]=html;bx.innerHTML=html;if(rd)rd.open=false;if(b)b.disabled=false;return}
+  catch(e){last=e;var rt=e.name==="AbortError"||[408,429,500,502,503,504,524,529].indexOf(e.st)>=0||/\b5\d\d\b/.test(e.m||"");if(!rt)break;if(i<tries.length-1)await new Promise(function(ok){setTimeout(ok,1500)})}}
+ if($("ansAi")!==bx)return;
+ bx.innerHTML='<div class="mu">AI chưa phản hồi ('+esc(last&&last.name==="AbortError"?"quá 40 giây":((last&&last.message)||"lỗi"))+"). Bản trích tự động hiện ở bên dưới.</div>";if(rd)rd.open=true;if(b)b.disabled=false}
 function ask(q){if(!q||!q.trim()){LAST=null;$("out").innerHTML="";return}LQ=q;if(isListQ(q)){LAST=null;$("out").innerHTML=listDocsHtml();return}var o={asOf:ST.as,P:ST.saved?ST.p:null},qs=splitQ(q);
  if(qs.length>1){var h="",first=null;qs.forEach(function(x){var r=run(x,o);r.q=x;if(r.kind==="ans"){first=first||r;h+=aHtml(r)}else{var px=sd(x),ea=px.length?exAnsHtml(px,x,1):null;h+='<div class="card"><div class="q">'+esc(x)+'</div>'+(ea||'<div class="mu">Chưa có điều khoản khớp cho ý này. Thử nêu rõ đối tượng (thang, hành lang, căn hộ...) hoặc số QCVN.</div>')+'</div>'}});
   LAST=first;if(first)CTX=first.q;$("out").innerHTML='<div class="ctx">Câu hỏi có '+qs.length+' ý, trả lời từng ý:</div>'+h+aiCard();return}
@@ -959,7 +973,7 @@ function srcBar(){var b=$("srcbar");if(!b)return;var nu=K.filter(function(r){ret
 function togRef(){var q0=ST.tab==="hoi"&&$("q")?$("q").value:"";ST.ref=ST.ref?0:1;RV=null;srcBar();tab(ST.tab);if(q0&&$("q")){$("q").value=q0;ask(q0)}}
 function boot(){try{var th=localStorage.getItem("archicode.th");if(th)document.documentElement.setAttribute("data-theme",th)}catch(e){}
  document.addEventListener("click",function(e){var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a;
-  if(a==="tab")tab(b.dataset.v);else if(a==="go")ask($("q").value);else if(a==="ex"){$("q").value=EX[b.dataset.i];ask(EX[b.dataset.i])}else if(a==="open")openRec(b.dataset.id);
+  if(a==="more"){var mP=b.parentNode,mS=mP.querySelector(".sh"),mF=mP.querySelector(".fl"),mO=mF.hidden;mF.hidden=!mO;mS.hidden=mO;b.textContent=mO?"Thu gọn":"Xem đầy đủ"}else if(a==="tab")tab(b.dataset.v);else if(a==="go")ask($("q").value);else if(a==="ex"){$("q").value=EX[b.dataset.i];ask(EX[b.dataset.i])}else if(a==="open")openRec(b.dataset.id);
   else if(a==="cp")cpy(b,atext(LAST));else if(a==="cpl")cpy(b,window._cl);else if(a==="ft"){ST.f.t=b.dataset.v;vVb()}else if(a==="dt"){ST.as=b.dataset.v;vHl()}else if(a==="th")theme();else if(a==="ref")togRef();else if(a==="del")delDoc(b.dataset.id);else if(a==="dels")ghDel(b.dataset.id);else if(a==="retry"){FC={};saveFC();b.textContent="Đang đọc lại...";syncShared()}else if(a==="ai")aiRun();else if(a==="ai1")ansAI(b);else if(a==="sgo")stgGo(b.dataset.id);else if(a==="sdrop")stgDrop(b.dataset.id);else if(a==="sall")stgAll();else if(a==="wkt")wkTest(b);else if(a==="gys")gySend(b);else if(a==="wk"){try{localStorage.setItem("archicode.wk",$("wk").value.trim())}catch(e){}b.textContent="Đã lưu"}else if(a==="tk"){var v=$("tk").value.trim(),g=ghInfo();if(v&&g){b.textContent="Đang kiểm tra...";fetch("https://api.github.com/repos/"+g.o+"/"+g.r,{headers:{Authorization:"Bearer "+v,Accept:"application/vnd.github+json"}}).then(function(r){if(r.ok){try{localStorage.setItem("archicode.tk",v)}catch(e){}vUp()}else b.textContent="Mã không hợp lệ hoặc không có quyền với repo này"}).catch(function(){b.textContent="Không kết nối được GitHub"})}}else if(a==="tkx"){try{localStorage.removeItem("archicode.tk")}catch(e){}vUp()}});
  loadIdx();srcBar();tab("hoi")}
 window.ENG={ruleAnsHtml:ruleAnsHtml,ansRun:ansRun,ask:ask,setUD:function(a){UD=a;build()},exAnsHtml:exAnsHtml,exAns:exAns,isListQ:isListQ,listDocsHtml:listDocsHtml,metaOf:metaOf,K:K,V:V,run:run,ans:ans,checklist:checklist,dstat:dstat,norm:norm,BY:BY,TODAY:TODAY,atext:atext};
