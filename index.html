@@ -618,21 +618,36 @@ function ansSrc(a,ps){var u=[],re=/\[(\d+)\]/g,m;while((m=re.exec(a)))if(u.index
 function ansRun(q){var bx=$("ansOut");if(!bx)return;var h=ruleAnsHtml(q)||exAnsHtml(sd(q),q,1)||'<div class="mu">Chưa có điều khoản khớp. Xem đoạn trích ở mục 3.</div>';
  bx.innerHTML='<div id="ansAi"></div><details class="acc" id="ansRule"><summary>Bản trích tự động từ văn bản (chưa chắt lọc)</summary><div class="bd"><div class="w l2" style="margin-bottom:8px">Bản này ghép số theo từ khóa nên có thể lẫn số của đối tượng khác (ví dụ chiều cao gian phòng với chiều cao đường thoát nạn). Hãy đối chiếu điều khoản gốc.</div>'+h+'</div></details><div style="margin-top:8px"><button class="chip" data-a="ai1">Tổng hợp lại bằng AI</button></div>';
  ansAI(null)}
+var RT=function(e){return e&&(e.name==="AbortError"||[408,429,500,502,503,504,524,529].indexOf(e.st)>=0||/\b5\d\d\b/.test(e.m||""))};
+function ansRace(w,q,all,PL){PL=PL||[{d:0,n:8,len:1000},{d:15000,n:4,len:700},{d:35000,n:3,len:500}];
+ return new Promise(function(res,rej){var st=[],tm=[],done=false,fails=0;
+  function stop(){done=true;tm.forEach(clearTimeout)}
+  function fire(i){if(done||st[i])return;st[i]=1;clearTimeout(tm[i]);var P=PL[i],ps=all.slice(0,P.n).map(function(x){return{doc:x.doc,page:x.page,text:x.text.slice(0,P.len)}});
+   aiCall(w,{question:ansPrompt(q),passages:ps,history:[],project:null,asOf:ST.as},60000).then(function(j){if(done)return;stop();res({j:j,ps:ps})},function(e){if(done)return;fails++;if(!RT(e)||fails>=PL.length){stop();rej(e);return}for(var k=0;k<PL.length;k++)if(!st[k]){fire(k);break}})}
+  PL.forEach(function(P,i){tm[i]=setTimeout(function(){fire(i)},P.d)})})}
+function ansLocal(q,ps){var qs=Object.keys(bt(norm(q))),need=qs.length<=2?1:Math.ceil(qs.length/2),C=[],seen={},qo=objOf(q);
+ ps.forEach(function(x){segs(x.text).forEach(function(g){String(g.x).split(/\.\s+(?=[A-ZĐÀ-Ỹ])/).forEach(function(sn){
+  sn=sn.replace(/\s+/g," ").trim();if(sn.length<25||!(sn.match(QTY)||[]).length)return;
+  var tk=bt(norm(sn)),h=0;qs.forEach(function(w){if(tk[w])h++});if(h<need)return;
+  var k=sn.slice(0,60);if(seen[k])return;seen[k]=1;
+  C.push({s:h*3+(qo&&objOf(sn)===qo?4:0),sn:sn.replace(/^(?:[A-ZĐ]\.)?\d+(?:\.\d+)*\.?\s+/,""),k:g.k,d:x.doc,p:x.page})})})});
+ if(!C.length)return"";C.sort(function(a,b){return b.s-a.s});C=C.slice(0,2);
+ var cut=function(t){return t.length>200?t.slice(0,200).replace(/\s+\S*$/,"")+"…":t};
+ return"**Kết luận:**\n"+C.map(function(c){return"- "+cut(c.sn)}).join("\n")+"\n**Căn cứ:**\n"+C.map(function(c){return"- "+dkOf(c.d)+(c.k?", "+(/^Bảng/i.test(c.k)?c.k:"điều "+c.k):"")+(c.p?", trang "+c.p:"")}).join("\n")+"\n**Lưu ý:**\n- Đây là câu trích nguyên văn có số liệu khớp từ khóa, chưa phân biệt đối tượng (đường thoát nạn, lối ra thoát nạn, gian phòng...). Hãy đọc điều khoản gốc."}
 async function ansAI(b){var bx=$("ansAi"),w=WK(),q=LQ,rd=$("ansRule");if(!bx)return;
- if(!w){bx.innerHTML='<div class="mu">Chưa cài Worker AI (tab Upload, mục Trợ lý AI), đang hiện bản trích tự động bên dưới.</div>';if(rd)rd.open=true;return}
  var all=ansPs(q);if(!all.length){if(rd)rd.open=true;return}
- var key=q+"|"+ST.as;if(!b&&ANSC[key]){bx.innerHTML=ANSC[key];if(rd)rd.open=false;return}
+ var key=q+"|"+ST.as;if(!b&&ANSC[key]){bx.innerHTML=ANSC[key];return}
+ var local=function(why){var lt="";try{lt=ansLocal(q,all)}catch(e){}
+  bx.innerHTML=lt?'<div class="mu" style="margin-bottom:4px">⚠ '+esc(why)+" Đây là bản trích tự động, không dùng AI.</div>"+ansFmt(lt)+'<div class="mu" style="margin-top:6px">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>':'<div class="mu">'+esc(why)+" Xem bản trích tự động bên dưới.</div>";if(!lt&&rd)rd.open=true};
+ if(!w){local("Chưa cài Worker AI (tab Upload, mục Trợ lý AI).");return}
  if(b)b.disabled=true;
- var tries=[{n:10,len:1200},{n:4,len:800}],last=null;
- for(var i=0;i<tries.length;i++){var T=tries[i];bx.innerHTML='<div class="mu">'+(i?"Lần 1 quá hạn, thử lại với ít đoạn trích hơn…":"🤖 AI đang tổng hợp đáp án từ văn bản đã up (tối đa 40 giây)…")+"</div>";
-  var ps=all.slice(0,T.n).map(function(x){return{doc:x.doc,page:x.page,text:x.text.slice(0,T.len)}});
-  try{var j=await aiCall(w,{question:ansPrompt(q),passages:ps,history:[],project:null,asOf:ST.as},40000);
-   if($("ansAi")!==bx||LQ!==q){if(b)b.disabled=false;return}
-   var html='<div class="mu" style="margin-bottom:4px">🤖 Tổng hợp bằng AI từ văn bản đã up (căn cứ trích nguyên văn ở mục bên dưới)</div>'+ansFmt(j.answer)+ansSrc(j.answer,ps)+vfy(j.answer,ps)+'<div class="mu" style="margin-top:6px">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>';
-   ANSC[key]=html;bx.innerHTML=html;if(rd)rd.open=false;if(b)b.disabled=false;return}
-  catch(e){last=e;var rt=e.name==="AbortError"||[408,429,500,502,503,504,524,529].indexOf(e.st)>=0||/\b5\d\d\b/.test(e.m||"");if(!rt)break;if(i<tries.length-1)await new Promise(function(ok){setTimeout(ok,1500)})}}
- if($("ansAi")!==bx)return;
- bx.innerHTML='<div class="mu">AI chưa phản hồi ('+esc(last&&last.name==="AbortError"?"quá 40 giây":((last&&last.message)||"lỗi"))+"). Bản trích tự động hiện ở bên dưới.</div>";if(rd)rd.open=true;if(b)b.disabled=false}
+ bx.innerHTML='<div class="mu">🤖 AI đang tổng hợp đáp án từ văn bản đã up (có thể tới khoảng 90 giây)…</div>';
+ try{var r=await ansRace(w,q,all);
+  if($("ansAi")!==bx||LQ!==q){if(b)b.disabled=false;return}
+  var html='<div class="mu" style="margin-bottom:4px">🤖 Tổng hợp bằng AI từ văn bản đã up (căn cứ trích nguyên văn ở mục bên dưới)</div>'+ansFmt(r.j.answer)+ansSrc(r.j.answer,r.ps)+vfy(r.j.answer,r.ps)+'<div class="mu" style="margin-top:6px">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>';
+  ANSC[key]=html;bx.innerHTML=html}
+ catch(e){if($("ansAi")===bx)local("AI chưa phản hồi ("+(e&&e.name==="AbortError"?"quá thời gian":((e&&e.message)||"lỗi"))+").")}
+ if(b)b.disabled=false}
 function ask(q){if(!q||!q.trim()){LAST=null;$("out").innerHTML="";return}LQ=q;if(isListQ(q)){LAST=null;$("out").innerHTML=listDocsHtml();return}var o={asOf:ST.as,P:ST.saved?ST.p:null},qs=splitQ(q);
  if(qs.length>1){var h="",first=null;qs.forEach(function(x){var r=run(x,o);r.q=x;if(r.kind==="ans"){first=first||r;h+=aHtml(r)}else{var px=sd(x),ea=px.length?exAnsHtml(px,x,1):null;h+='<div class="card"><div class="q">'+esc(x)+'</div>'+(ea||'<div class="mu">Chưa có điều khoản khớp cho ý này. Thử nêu rõ đối tượng (thang, hành lang, căn hộ...) hoặc số QCVN.</div>')+'</div>'}});
   LAST=first;if(first)CTX=first.q;$("out").innerHTML='<div class="ctx">Câu hỏi có '+qs.length+' ý, trả lời từng ý:</div>'+h+aiCard();return}
