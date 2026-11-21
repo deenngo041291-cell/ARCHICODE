@@ -598,7 +598,20 @@ function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),
  if(ord.some(function(n){return M[n].length>1}))nt.push('Có nhiều giá trị theo nhóm nhà, số người hoặc điều kiện: xem nguyên văn ở mục 3.');
  var mt=metaOf(pri[0].doc).v,st=mt?dstat(mt,ST.as):null;
  return'<div class="mu" style="margin-bottom:4px">✔ Tổng hợp tức thì từ văn bản đã up (theo quy tắc, không dùng AI)</div><div class="fa">'+esc(cap1(on||"Kết quả"))+': '+esc(l1)+'</div><div class="mu">Căn cứ: '+l2+(st?' '+chip(st):'')+'</div>'+(nt.length?'<div class="mu" style="margin-top:6px"><b>Lưu ý thêm:</b></div>'+nt.slice(0,3).map(function(t){return'<div class="mu">• '+t+'</div>'}).join(""):'')+'<div class="mu" style="margin-top:6px">Ghép chiều–giá trị theo cách hiểu của tôi từ nguyên văn file; bảng PDF có thể lệch cột.</div><div class="mu">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>'}
-function ansPrompt(q){return"Tổng hợp đáp án NGẮN GỌN (tối đa 170 từ) chỉ từ các đoạn trích [n], đúng thứ tự: **Kết luận:** số liệu + đơn vị + đối tượng áp dụng; nếu có nhiều giá trị theo thuật ngữ hoặc nhóm nhà thì tách từng dòng. **Căn cứ:** văn bản, điều/mục/bảng, trang, kèm [n]. **Lưu ý:** thuật ngữ gần nghĩa có giá trị khác, điều kiện, ngoại lệ, hiệu lực. **Tư vấn:** 1-2 gợi ý thiết kế (ghi rõ là gợi ý, không phải quy định). Không hỏi lại, không chép nguyên văn dài, không bịa; thiếu căn cứ thì ghi \"Không tìm thấy trong bộ tài liệu hiện có\". Câu hỏi: "+q}
+function ansPrompt(q){return"Tổng hợp đáp án NGẮN GỌN chỉ từ các đoạn trích [n]. Mỗi mục bắt đầu một dòng riêng, đúng thứ tự: **Kết luận:** 1-2 dòng, mỗi dòng một giá trị (số + đơn vị + đối tượng áp dụng), tách riêng nếu khác nhau theo thuật ngữ, nhóm nhà, số người. **Căn cứ:** văn bản, điều/mục/bảng, trang, kèm [n]. **Lưu ý:** 2-4 ý về điểm DỄ NHẦM và liên quan: thuật ngữ gần nghĩa nhưng giá trị khác (vd đường thoát nạn / lối ra thoát nạn / hành lang / cửa), khác biệt theo nhóm nhà, điều kiện, ngoại lệ, hiệu lực, kèm [n]. **Tư vấn:** 1-2 gợi ý thiết kế (ghi rõ là gợi ý, không phải quy định). Không hỏi lại, không chép dài, không bịa; thiếu căn cứ thì ghi \"Không tìm thấy trong bộ tài liệu hiện có\". Câu hỏi: "+q}
+function ansFmt(t){var re=/(?:^|\n)[ \t]*\**[ \t]*(Kết luận|Căn cứ|Lưu ý|Tư vấn(?: thiết kế)?|Điều kiện(?:\/ngoại lệ)?|Cần xác nhận)[ \t]*\**[ \t]*:[ \t]*\**/gi,hs=[],m;
+ while((m=re.exec(t)))hs.push({k:m[1].toLowerCase(),a:m.index,b:re.lastIndex});
+ if(!hs.length||hs[0].k!=="kết luận")return'<div style="line-height:1.55">'+md(t)+"</div>";
+ var P={kl:[],cc:[],ln:[],tv:[]};
+ var LS=function(x){return x.split("\n").map(function(l){return l.replace(/^\s*(?:[-•]|\*(?!\*))\s*/,"").trim()}).filter(Boolean)};
+ var cz=function(h){return h.replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g,'<sup style="color:var(--mu);font-size:11px;font-weight:400">[$1]</sup>')};
+ hs.forEach(function(h,i){var body=t.slice(h.b,i+1<hs.length?hs[i+1].a:t.length),k=h.k==="kết luận"?"kl":h.k==="căn cứ"?"cc":h.k.indexOf("tư vấn")===0?"tv":"ln";P[k]=P[k].concat(LS(body))});
+ var o="";
+ P.kl.forEach(function(l){o+='<div class="fa" style="font-size:22px;line-height:1.3;margin:2px 0 8px">'+cz(md(l))+"</div>"});
+ if(P.cc.length)o+='<div class="mu" style="margin-top:6px;font-size:12px"><b>Căn cứ</b></div>'+P.cc.map(function(l){return'<div class="mu" style="font-size:12px">• '+cz(md(l))+"</div>"}).join("");
+ if(P.ln.length)o+='<div class="w l2" style="margin-top:10px"><b>⚠ Lưu ý, dễ nhầm</b>'+P.ln.map(function(l){return'<div style="margin-top:4px">• '+cz(md(l))+"</div>"}).join("")+"</div>";
+ if(P.tv.length)o+='<div class="tip" style="margin-top:10px"><b>Tư vấn thiết kế</b>'+P.tv.map(function(l){return'<div style="margin-top:4px">• '+cz(md(l))+"</div>"}).join("")+"</div>";
+ return o}
 var ANSC={};
 function dkOf(d){var m=metaOf(d);return m.v?m.v.key:String(d).replace(/\.[A-Za-z0-9]+$/,"")}
 function ansSrc(a,ps){var u=[],re=/\[(\d+)\]/g,m;while((m=re.exec(a)))if(u.indexOf(m[1])<0&&ps[m[1]-1])u.push(m[1]);u.sort(function(x,y){return x-y});if(!u.length)return"";return'<div class="mu" style="margin-top:6px">Nguồn: '+u.map(function(n){var p=ps[n-1];return"["+n+"] "+esc(dkOf(p.doc))+(p.page?", trang "+esc(String(p.page)):"")}).join("; ")+"</div>"}
@@ -610,12 +623,12 @@ async function ansAI(b){var bx=$("ansAi"),w=WK(),q=LQ,rd=$("ansRule");if(!bx)ret
  var all=ansPs(q);if(!all.length)return;
  var key=q+"|"+ST.as;if(!b&&ANSC[key]){bx.innerHTML=ANSC[key];if(rd)rd.open=false;return}
  if(b)b.disabled=true;if(rd)rd.open=true;
- var tries=[{n:8,len:1400},{n:4,len:800}],last=null;
+ var tries=[{n:10,len:1200},{n:4,len:800}],last=null;
  for(var i=0;i<tries.length;i++){var T=tries[i];bx.innerHTML='<div class="mu">'+(i?"Lần 1 quá hạn, thử lại với ít đoạn trích hơn…":"🤖 AI đang tổng hợp đáp án từ văn bản đã up (tối đa 40 giây)…")+"</div>";
   var ps=all.slice(0,T.n).map(function(x){return{doc:x.doc,page:x.page,text:x.text.slice(0,T.len)}});
   try{var j=await aiCall(w,{question:ansPrompt(q),passages:ps,history:[],project:null,asOf:ST.as},40000);
    if($("ansAi")!==bx||LQ!==q){if(b)b.disabled=false;return}
-   var html='<div class="mu" style="margin-bottom:4px">🤖 Tổng hợp bằng AI từ văn bản đã up (căn cứ trích nguyên văn ở mục bên dưới)</div><div style="line-height:1.55">'+md(j.answer)+"</div>"+ansSrc(j.answer,ps)+vfy(j.answer,ps)+'<div class="mu" style="margin-top:6px">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>';
+   var html='<div class="mu" style="margin-bottom:4px">🤖 Tổng hợp bằng AI từ văn bản đã up (căn cứ trích nguyên văn ở mục bên dưới)</div>'+ansFmt(j.answer)+ansSrc(j.answer,ps)+vfy(j.answer,ps)+'<div class="mu" style="margin-top:6px">Cần đối chiếu văn bản gốc và cơ quan thẩm duyệt.</div>';
    ANSC[key]=html;bx.innerHTML=html;if(rd)rd.open=false;if(b)b.disabled=false;return}
   catch(e){last=e;var rt=e.name==="AbortError"||[408,429,500,502,503,504,524,529].indexOf(e.st)>=0||/\b5\d\d\b/.test(e.m||"");if(!rt)break;if(i<tries.length-1)await new Promise(function(ok){setTimeout(ok,1500)})}}
  if($("ansAi")!==bx)return;
