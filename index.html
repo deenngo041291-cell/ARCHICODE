@@ -1004,7 +1004,7 @@ function vfy(a,ps){var src=ps.map(function(x){return(x.doc||"")+" "+(x.page||"")
 async function aiRun(){var w=WK(),bx=$("aiOut");if(!bx)return;if(!w){bx.textContent="Chưa cài địa chỉ Worker (tab Upload, mục Trợ lý AI).";return}
  var o={asOf:ST.as,P:ST.saved?ST.p:null},all=sd(LQ).map(function(x){return{doc:x.c.doc,page:x.c.p,text:x.c.t}}),res=run(LQ,o),rc=[];
  if(res.kind==="ans"&&res.s)rc.push({doc:res.s.doc,page:res.s.clause,text:res.s.obj+": "+res.concl});
- var tries=[{n:6,len:1200,h:2},{n:3,len:700,h:0}],last=null;
+ var tries=[{n:5,len:1100,h:1},{n:3,len:700,h:0}],last=null;
  for(var i=0;i<tries.length;i++){var t=tries[i];bx.textContent=i?"Lần 1 quá hạn, đang thử lại với ít đoạn trích hơn...":"AI đang đọc văn bản và suy nghĩ (tối đa khoảng 70 giây)...";
   var ps=all.slice(0,t.n).map(function(x){return{doc:x.doc,page:x.page,text:x.text.slice(0,t.len)}});
   try{var j=await aiCall(w,{question:LQ,passages:rc.concat(ps),history:t.h?HIST.slice(-t.h):[],project:o.P,asOf:ST.as},70000);HIST.push([LQ,j.answer]);bx.innerHTML=md(j.answer)+vfy(j.answer,rc.concat(ps))+'<div class="mu" style="margin-top:6px">'+(i?"Đã rút gọn còn "+t.n+" đoạn trích vì lần đầu quá hạn. ":"")+"AI trả lời dựa trên các đoạn trích ở trên, hãy đối chiếu văn bản gốc.</div>";return}
@@ -1018,8 +1018,8 @@ async function wkTest(b){var w=WK(),t0=performance.now(),o=$("wkst"),c=new Abort
 async function hk(u){try{var r=await fetch(u,{method:"HEAD",cache:"no-cache"});return(r.headers.get("etag")||r.headers.get("last-modified")||"")+"|"+(r.headers.get("content-length")||"")}catch(e){return""}}
 async function syncShared(){var st=function(t){window._sst=t;if($("sst"))$("sst").textContent=t},names=null,m=/^([^.]+)\.github\.io$/.exec(location.hostname),rp=location.pathname.split("/")[1];
  if(location.protocol==="file:")return;
- try{if(m&&rp){var r=await fetch("https://api.github.com/repos/"+m[1]+"/"+rp+"/contents/docs",TK()?{headers:{Authorization:"Bearer "+TK()}}:undefined);if(r.ok)names=(await r.json()).filter(function(f){return/\.(pdf|docx|doc|xlsx|xls|csv|txt|md)$/i.test(f.name)}).map(function(f){return{n:f.name,k:f.sha}})}}catch(e){}
- if(!names)try{var r2=await fetch("docs/danh-sach.json",{cache:"no-cache"});if(r2.ok)names=(await r2.json()).map(function(n){return{n:n,k:null}})}catch(e){}
+ try{var r2=await fetch("docs/danh-sach.json",{cache:"no-cache"});if(r2.ok)names=(await r2.json()).map(function(n){return{n:n,k:null}})}catch(e){}
+ if(!names)try{if(m&&rp){var r=await fetch("https://api.github.com/repos/"+m[1]+"/"+rp+"/contents/docs",TK()?{headers:{Authorization:"Bearer "+TK()}}:undefined);if(r.ok)names=(await r.json()).filter(function(f){return/\.(pdf|docx|doc|xlsx|xls|csv|txt|md)$/i.test(f.name)}).map(function(f){return{n:f.name,k:f.sha}})}}catch(e){}
  if(!names){st('Không lấy được danh sách file trong thư mục docs (GitHub API có thể đang giới hạn lượt gọi, hoặc sai tên repo). Cách khắc phục: thêm file docs/danh-sach.json chứa danh sách tên file, ví dụ ["QCVN_06-2022_BXD___sd_2023.pdf"].');if(ST.tab==="vb"&&!ST.f.t)vVb();return}
  var ch=0;FAILS=[];
  for(var i=0;i<names.length;i++){var n=names[i].n,u="docs/"+encodeURIComponent(n),k=names[i].k||await hk(u),ex=UD.filter(function(d){return d.shared&&d.name===n})[0];
