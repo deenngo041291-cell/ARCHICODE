@@ -619,14 +619,15 @@ function ruleAnsHtml(q){var qs=Object.keys(bt(norm(q))),qo=objOf(q),qd=qDims(q),
  val=S.filter(function(s){return!s.def&&s.pr.ord.some(okD)}).sort(cmp),
  pri=val.filter(function(s){return!qo||s.o===qo}).slice(0,2);
  if(!pri.length)pri=val.slice(0,1);if(!pri.length)return"";
- var M={},ord=[],src=[];pri.forEach(function(s){s.pr.ord.filter(okD).forEach(function(n){if(!M[n]){M[n]=s.pr.P[n];ord.push(n);if(src.indexOf(s)<0)src.push(s)}})});
+ var M={},ord=[],src=[];pri.slice(0,1).forEach(function(s){s.pr.ord.filter(okD).forEach(function(n){if(!M[n]){M[n]=s.pr.P[n];ord.push(n);if(src.indexOf(s)<0)src.push(s)}})});
  var l1=ord.map(function(n){var v=M[n];return n+" "+v.join(" / ")+(v.length>1?" (tùy điều kiện)":"")}).join("; "),
  on=pri[0].o||qo,
  dk=function(d){var m=metaOf(d);return m.v?m.v.key:String(d).replace(/\.[A-Za-z0-9]+$/,"")},
  l2="Theo "+src.map(function(s){return(s.k?(/^Bảng/i.test(s.k)?esc(s.k):'điều '+esc(s.k)):'đoạn')+' của '+esc(dk(s.doc))+', trang '+s.p}).join("; ")+": "+moreT(src[0].x.replace(/^(?:[A-Z]\.)?\d+(?:\.\d+)*\.?\s+/,""),150),
  rel=val.filter(function(s){return qo&&s.o&&s.o!==qo&&pri.indexOf(s)<0}).slice(0,2),
  defs=S.filter(function(s){return s.def&&s.o&&(s.o===on||rel.some(function(r){return r.o===s.o}))}).sort(cmp).slice(0,2),nt=[];
- defs.forEach(function(d){nt.push('Định nghĩa (điều '+esc(d.k)+', trang '+d.p+'): '+moreT(d.x.replace(/^\S+\s+/,""),170))});
+ pri.slice(1).forEach(function(s){nt.push('Điều khoản khác cùng chủ đề, <b>chưa gộp vào đáp án</b> ('+(s.k?(/^Bảng/i.test(s.k)?esc(s.k):'điều '+esc(s.k))+', ':'')+'trang '+s.p+'): '+moreT(s.x.replace(/^(?:[A-Z]\.)?\d+(?:\.\d+)*\.?\s+/,""),170))});
+  defs.forEach(function(d){nt.push('Định nghĩa (điều '+esc(d.k)+', trang '+d.p+'): '+moreT(d.x.replace(/^\S+\s+/,""),170))});
  rel.forEach(function(r){nt.push('Với <b>'+esc(r.o)+'</b> ('+(r.k?'điều '+esc(r.k)+', ':'')+'trang '+r.p+'): '+esc(r.pr.ord.map(function(n){return n+" "+r.pr.P[n].join(" / ")}).join("; ")))});
  if(ord.some(function(n){return M[n].length>1}))nt.push('Có nhiều giá trị theo nhóm nhà, số người hoặc điều kiện: xem nguyên văn ở mục 3.');
  var mt=metaOf(pri[0].doc).v,st=mt?dstat(mt,ST.as):null;
